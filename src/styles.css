@@ -893,8 +893,8 @@ h2 { font-size: 20px; line-height: 1.3; }
 .quest-hero .btn { width: auto; margin-top: 10px; }
 .quest-row { padding: 20px; }
 .booklet { border: 1px solid var(--line); box-shadow: none; padding: 24px; margin: 24px 0; border-radius: 32px; }
-.booklet-head { background: var(--clay); color: white; padding: 28px; border-radius: 24px; margin-bottom: 20px; }
-.booklet-head .eyebrow, .booklet-head .fine { color: white; }
+.booklet-head { background: #f5d9e3; color: var(--ink); padding: 28px; border-radius: 24px; margin-bottom: 20px; }
+.booklet-head .eyebrow, .booklet-head .fine { color: var(--ink-soft); }
 .percent { font-size: 32px; line-height: 1.3; }
 .ring-track { stroke: #ffffff40; }
 .ring-value { stroke: white; }
@@ -1071,3 +1071,14 @@ h2 { font-size: 20px; line-height: 1.3; }
 }
 .open-maps:hover { background: var(--leaf); }
 .open-maps svg { flex-shrink: 0; }
+
+.time-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.journey-stop .stop-card { border: 0; background: transparent; color: inherit; }
+
+.booklet-head .ring-track { stroke: #a63c6926; }
+.booklet-head .ring-value { stroke: #a63c69; }
+
+.stat-link { text-align: left; color: inherit; transition: background 160ms, border-color 160ms; }
+.stat-link:hover { background: #f5d9e3; border-color: var(--clay); }
+.profile-anchor { scroll-margin-top: 20px; }

@@ -113,7 +113,7 @@ export type JourneyStop = {
   why: string;
 };
 
-export type JourneyDuration = 45 | 90 | 180;
+export type JourneyDuration = 30 | 60 | 90 | 120;
 
 export type JourneyPlan = {
   duration: JourneyDuration;

@@ -77,17 +77,7 @@ export function PlaceCard({
         </div>
       </button>
       <div className="place-card-actions">
-        <a
-          className="open-maps"
-          href={`https://maps.apple.com/?${new URLSearchParams({ ll: `${place.lat},${place.lng}`, q: place.name })}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Open ${place.name} in Maps`}
-        >
-          <DesignIcon name="map" size="sm" />
-          Open in Maps
-          <DesignIcon name="arrow" size="sm" />
-        </a>
+        <OpenInMaps place={place} />
       </div>
     </article>
   );
@@ -115,4 +105,20 @@ function RotatingLines({ lines, fallback }: { lines: string[]; fallback: string 
     return () => window.clearInterval(handle);
   }, [lines.length]);
   return <p>{lines[index] ?? fallback}</p>;
+}
+
+export function OpenInMaps({ place }: { place: Pick<Discovery, "lat" | "lng" | "name"> }) {
+  return (
+        <a
+          className="open-maps"
+          href={`https://maps.apple.com/?${new URLSearchParams({ ll: `${place.lat},${place.lng}`, q: place.name })}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Open ${place.name} in Maps`}
+        >
+          <DesignIcon name="map" size="sm" />
+          Open in Maps
+          <DesignIcon name="arrow" size="sm" />
+        </a>
+  );
 }

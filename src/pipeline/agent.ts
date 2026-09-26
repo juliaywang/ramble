@@ -20,9 +20,10 @@ import {
 type Person = Pick<UserAccount, "interests" | "discoveredIds" | "quests">;
 
 const JOURNEY_TITLES: Record<JourneyDuration, string> = {
-  45: "A short ramble",
+  30: "A quick ramble",
+  60: "An hour around the neighborhood",
   90: "The long lunch",
-  180: "An afternoon route",
+  120: "An afternoon route",
 };
 
 function interestTitle(id: InterestId) {
@@ -248,7 +249,7 @@ export function buildJourney(
   avoidSignature?: string,
   builtAt = new Date().toISOString(),
 ): JourneyPlan {
-  const stopCount = duration === 45 ? 2 : duration === 90 ? 3 : 4;
+  const stopCount = duration === 30 ? 1 : duration === 60 ? 2 : duration === 90 ? 3 : 4;
   const ranked = [...places].sort(
     (a, b) => journeyScore(person, b, places) - journeyScore(person, a, places) || a.id.localeCompare(b.id),
   );

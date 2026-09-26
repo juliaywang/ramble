@@ -16,6 +16,12 @@ export function ProfileScreen() {
     .map((id) => feed.places.find((place) => place.id === id))
     .filter((place) => place !== undefined);
   const percent = passportPercent(passportRows(user, feed.places));
+  const discovered = feed.places.filter((place) => user.discoveredIds.includes(place.id));
+  function jumpTo(id: string) {
+    const heading = document.getElementById(id);
+    heading?.focus({ preventScroll: true });
+    heading?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  }
   const initial = firstName(user.name).slice(0, 1).toUpperCase();
 
   return (
@@ -32,26 +38,26 @@ export function ProfileScreen() {
       </header>
 
       <div className="stats">
-        <article className="stat">
+        <button type="button" className="stat stat-link" onClick={() => jumpTo("profile-quests")} aria-controls="profile-quests">
           <b>{completed.length}</b>
           <span>Quests completed</span>
           <small>{totalXp(user.quests)} XP</small>
-        </article>
-        <article className="stat">
+        </button>
+        <button type="button" className="stat stat-link" onClick={() => jumpTo("profile-discovered")} aria-controls="profile-discovered">
           <b>{user.discoveredIds.length}</b>
           <span>Places discovered</span>
-        </article>
-        <article className="stat">
+        </button>
+        <button type="button" className="stat stat-link" onClick={() => jumpTo("profile-neighborhoods")} aria-controls="profile-neighborhoods">
           <b>1</b>
           <span>Neighborhoods explored</span>
           <small>
             {NEIGHBORHOOD.name} · {percent}%
           </small>
-        </article>
-        <article className="stat">
+        </button>
+        <button type="button" className="stat stat-link" onClick={() => jumpTo("profile-saved")} aria-controls="profile-saved">
           <b>{saved.length}</b>
           <span>Saved places</span>
-        </article>
+        </button>
       </div>
 
       <div className="section-head row-head">
@@ -72,7 +78,7 @@ export function ProfileScreen() {
       </div>
 
       <div className="section-head">
-        <h2>Saved places</h2>
+        <h2 id="profile-saved" className="profile-anchor" tabIndex={-1}>Saved places</h2>
       </div>
       {saved.length === 0 ? (
         <p className="empty">Save a place from its page and it will wait here.</p>
@@ -90,13 +96,13 @@ export function ProfileScreen() {
       )}
 
       <div className="section-head">
-        <h2>Recent adventures</h2>
+        <h2 id="profile-quests" className="profile-anchor" tabIndex={-1}>Quests completed</h2>
       </div>
       {completed.length === 0 ? (
         <p className="empty">Completed side quests will show up here, still tied to this account.</p>
       ) : (
         <ul className="log-list">
-          {completed.slice(0, 4).map((quest) => (
+          {completed.map((quest) => (
             <li key={quest.id}>
               <button type="button" onClick={() => go({ name: "quest", id: quest.id })}>
                 <strong>{quest.title}</strong>
@@ -108,6 +114,30 @@ export function ProfileScreen() {
           ))}
         </ul>
       )}
+
+      <div className="section-head">
+        <h2 id="profile-discovered" className="profile-anchor" tabIndex={-1}>Places discovered</h2>
+      </div>
+      {discovered.length ? (
+        <ul className="log-list">
+          {discovered.map((place) => (
+            <li key={place.id}>
+              <button type="button" onClick={() => go({ name: "place", id: place.id })}>
+                <strong>{place.name}</strong><small>{place.address}</small>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="empty">Your discovered places will appear here.</p>}
+
+      <div className="section-head">
+        <h2 id="profile-neighborhoods" className="profile-anchor" tabIndex={-1}>Neighborhoods explored</h2>
+      </div>
+      <ul className="log-list">
+        <li><button type="button" onClick={() => go({ name: "passport" })}>
+          <strong>{NEIGHBORHOOD.name}</strong><small>{percent}% explored · Open passport</small>
+        </button></li>
+      </ul>
 
       <p className="fine pipeline-note">
         {NEIGHBORHOOD.name}. Verified places come from five NYC Open Data feeds — markets, public art, community gardens, landmarks, and libraries, museums, and community centers. Live Discovery is still the saved stand-in for a later search.

@@ -1,6 +1,6 @@
 import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
 import { useEffect, useState } from "react";
-import { Generating, SourceBadge } from "../components/ui";
+import { Generating, SourceBadge, OpenInMaps } from "../components/ui";
 import { motionDelay } from "../lib/motion";
 import { buildJourney, categoryLabel } from "../pipeline/agent";
 import { type JourneyDuration } from "../pipeline/types";
@@ -8,9 +8,10 @@ import { useFeed } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
 
 const LENGTHS: { id: JourneyDuration; label: string; hint: string }[] = [
-  { id: 45, label: "45 min", hint: "Between classes" },
-  { id: 90, label: "90 min", hint: "A long lunch" },
-  { id: 180, label: "3 hours", hint: "An afternoon" },
+  { id: 30, label: "30 mins", hint: "A quick break" },
+  { id: 60, label: "1 hour", hint: "Between classes" },
+  { id: 90, label: "90 mins", hint: "A long lunch" },
+  { id: 120, label: "2 hours", hint: "An afternoon" },
 ];
 
 const LINES = [
@@ -23,7 +24,7 @@ export function JourneyScreen() {
   const user = useRequiredUser();
   const { go } = useRamble();
   const feed = useFeed();
-  const [duration, setDuration] = useState<JourneyDuration>(user.journey?.duration ?? 90);
+  const [duration, setDuration] = useState<JourneyDuration>(LENGTHS.find((option) => option.id === user.journey?.duration)?.id ?? 90);
   const plan = user.journey;
 
   return (
@@ -76,7 +77,8 @@ export function JourneyScreen() {
               return (
                 <li key={stop.discoveryId}>
                   <div className="leg">{stop.walkMinutes} min walk</div>
-                  <button type="button" className="card stop-card" onClick={() => go({ name: "place", id: place.id })}>
+                  <div className="card journey-stop">
+                  <button type="button" className="stop-card" onClick={() => go({ name: "place", id: place.id })}>
                     <span className="stop-index">{index + 1}</span>
                     <span className="stop-emoji category-icon" style={{ background: categoryColors[place.category] }} aria-hidden="true">
                       <DesignIcon name={categoryIcons[place.category]} />
@@ -90,6 +92,8 @@ export function JourneyScreen() {
                       <SourceBadge source={place.source} />
                     </span>
                   </button>
+                  <div className="place-card-actions"><OpenInMaps place={place} /></div>
+                  </div>
                 </li>
               );
             })}
