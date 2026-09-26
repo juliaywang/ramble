@@ -13,6 +13,7 @@ import {
   QuestOfferScreen,
   QuestsScreen,
 } from "./screens/Quests";
+import { AreaProvider } from "./state/AreaContext";
 import { FeedProvider } from "./state/FeedContext";
 import { RambleProvider, useRamble } from "./state/RambleContext";
 import { screenKey, tabOf, type TabName } from "./state/screens";
@@ -28,9 +29,11 @@ const TABS: { id: TabName; label: string; icon: typeof IconCompass }[] = [
 export function App() {
   return (
     <FeedProvider>
-      <RambleProvider>
-        <Shell />
-      </RambleProvider>
+      <AreaProvider>
+        <RambleProvider>
+          <Shell />
+        </RambleProvider>
+      </AreaProvider>
     </FeedProvider>
   );
 }

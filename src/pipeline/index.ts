@@ -105,6 +105,12 @@ const GENERATED: Partial<Record<Discovery["category"], { title: string; objectiv
     visitMinutes: 25,
     xp: 45,
   },
+  culture: {
+    title: "Read the bulletin board",
+    objective: "Stop at {name} and read one posted program, class, or meeting. If the door is locked, the board still counts.",
+    visitMinutes: 20,
+    xp: 35,
+  },
 };
 
 export function getNeighborhoodFeed(): NeighborhoodFeed {

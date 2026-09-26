@@ -1,11 +1,10 @@
 import type { Discovery } from "./types";
 
 /**
- * Mock neighborhood feed for Morningside Heights.
- * Each record is already in the normalized Discovery shape that
- * NYC Open Data adapters and Tavily results should produce.
+ * Curated Morningside Heights places the five city datasets do not cover,
+ * plus the written copy laid over the places those datasets do know.
  */
-export const DISCOVERIES: Discovery[] = [
+const MORNINGSIDE: Omit<Discovery, "borough">[] = [
   {
     id: "book-culture",
     name: "Book Culture on Broadway",
@@ -359,3 +358,8 @@ export const DISCOVERIES: Discovery[] = [
     passportCategory: null,
   },
 ];
+
+export const DISCOVERIES: Discovery[] = MORNINGSIDE.map((place) => ({
+  ...place,
+  borough: "manhattan",
+}));

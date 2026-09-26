@@ -1,5 +1,7 @@
+import { DownloadAppLink } from "../components/DownloadApp";
 import { firstName, formatWhen, greeting } from "../lib/format";
 import { passportPercent, passportRows, totalXp } from "../pipeline/agent";
+import { boroughName } from "../pipeline/geo";
 import { INTERESTS, NEIGHBORHOOD } from "../pipeline/types";
 import { useFeed } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
@@ -17,6 +19,7 @@ export function ProfileScreen() {
     .filter((place) => place !== undefined);
   const percent = passportPercent(passportRows(user, feed.places));
   const discovered = feed.places.filter((place) => user.discoveredIds.includes(place.id));
+  const explored = [...new Set(discovered.map((place) => place.borough))];
   function jumpTo(id: string) {
     const heading = document.getElementById(id);
     heading?.focus({ preventScroll: true });
@@ -48,8 +51,8 @@ export function ProfileScreen() {
           <span>Places discovered</span>
         </button>
         <button type="button" className="stat stat-link" onClick={() => jumpTo("profile-neighborhoods")} aria-controls="profile-neighborhoods">
-          <b>1</b>
-          <span>Neighborhoods explored</span>
+          <b>{explored.length}</b>
+          <span>Boroughs explored</span>
           <small>
             {NEIGHBORHOOD.name} · {percent}%
           </small>
@@ -131,17 +134,23 @@ export function ProfileScreen() {
       ) : <p className="empty">Your discovered places will appear here.</p>}
 
       <div className="section-head">
-        <h2 id="profile-neighborhoods" className="profile-anchor" tabIndex={-1}>Neighborhoods explored</h2>
+        <h2 id="profile-neighborhoods" className="profile-anchor" tabIndex={-1}>Boroughs explored</h2>
       </div>
       <ul className="log-list">
-        <li><button type="button" onClick={() => go({ name: "passport" })}>
-          <strong>{NEIGHBORHOOD.name}</strong><small>{percent}% explored · Open passport</small>
-        </button></li>
+        {explored.map((borough) => (
+          <li key={borough}>
+            <button type="button" onClick={() => go({ name: "passport" })}>
+              <strong>{boroughName(borough)}</strong>
+              <small>{percent}% of the city passport · Open passport</small>
+            </button>
+          </li>
+        ))}
       </ul>
 
       <p className="fine pipeline-note">
-        {NEIGHBORHOOD.name}. Verified places come from five NYC Open Data feeds — markets, public art, community gardens, landmarks, and libraries, museums, and community centers. Live Discovery is still the saved stand-in for a later search.
+        Verified places across Manhattan, Brooklyn, Queens, the Bronx, and Staten Island come from five NYC Open Data feeds — markets, public art, community gardens, landmarks, and libraries, museums, and community centers.
       </p>
+      <DownloadAppLink block />
       <button type="button" className="btn btn-ghost btn-block" onClick={logOut}>
         Log out
       </button>

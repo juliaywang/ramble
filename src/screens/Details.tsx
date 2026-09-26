@@ -1,5 +1,6 @@
 import { BackRow, PlaceMedia, SourceBadge } from "../components/ui";
-import { ANCHOR, distanceMiles, formatDistance, walkMinutes } from "../pipeline/geo";
+import { distanceMiles, formatDistance, walkMinutes } from "../pipeline/geo";
+import { useArea } from "../state/AreaContext";
 import { categoryLabel, explainCommunity, explainPlace, matchScore } from "../pipeline/agent";
 import { communityById } from "../pipeline/index";
 import { CATEGORIES } from "../pipeline/types";
@@ -9,6 +10,7 @@ import { useRamble, useRequiredUser } from "../state/RambleContext";
 export function PlaceScreen({ id }: { id: string }) {
   const user = useRequiredUser();
   const { back, go, toggleSave } = useRamble();
+  const { area } = useArea();
   const place = usePlace(id);
   if (!place) {
     return (
@@ -18,7 +20,7 @@ export function PlaceScreen({ id }: { id: string }) {
       </section>
     );
   }
-  const miles = distanceMiles(ANCHOR, place);
+  const miles = distanceMiles(area.anchor, place);
   const minutes = walkMinutes(miles);
   const match = matchScore(user.interests, place.tags);
   const saved = user.savedIds.includes(place.id);
@@ -52,7 +54,7 @@ export function PlaceScreen({ id }: { id: string }) {
       </div>
       <section className="why-panel">
         <h2>Why Ramble recommended it</h2>
-        <p>{explainPlace(user, place)}</p>
+        <p>{explainPlace(user, place, area.anchor)}</p>
       </section>
       <dl className="facts">
         <div>
@@ -66,7 +68,7 @@ export function PlaceScreen({ id }: { id: string }) {
         <div>
           <dt>From</dt>
           <dd>
-            {ANCHOR.label}, {ANCHOR.detail}
+            {area.anchor.label}, {area.anchor.detail}
           </dd>
         </div>
       </dl>

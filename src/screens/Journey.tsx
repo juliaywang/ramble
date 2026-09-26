@@ -1,9 +1,11 @@
 import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Generating, SourceBadge, OpenInMaps } from "../components/ui";
 import { motionDelay } from "../lib/motion";
 import { buildJourney, categoryLabel } from "../pipeline/agent";
+import { placeInArea } from "../pipeline/geo";
 import { type JourneyDuration } from "../pipeline/types";
+import { useArea } from "../state/AreaContext";
 import { useFeed } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
 
@@ -24,6 +26,7 @@ export function JourneyScreen() {
   const user = useRequiredUser();
   const { go } = useRamble();
   const feed = useFeed();
+  const { area } = useArea();
   const [duration, setDuration] = useState<JourneyDuration>(LENGTHS.find((option) => option.id === user.journey?.duration)?.id ?? 90);
   const plan = user.journey;
 
@@ -32,7 +35,7 @@ export function JourneyScreen() {
       <p className="eyebrow">AI journey</p>
       <h1>Build a route, not a list.</h1>
       <p className="lede">
-        Tell Ramble how long you have. It threads a few nearby stops — verified places and live discoveries — into one walk from College Walk.
+        Tell Ramble how long you have. It threads a few nearby stops — verified places and live discoveries — into one walk from {area.anchor.label}.
       </p>
       <div className="time-grid" role="radiogroup" aria-label="How much time you have">
         {LENGTHS.map((option) => (
@@ -70,7 +73,7 @@ export function JourneyScreen() {
           <p>{plan.intro}</p>
           {plan.repeated ? <p className="fine">This is still the strongest route for that amount of time.</p> : null}
           <ol className="route">
-            <li className="route-start">Start · College Walk</li>
+            <li className="route-start">Start · {plan.startLabel ?? area.anchor.label}</li>
             {plan.stops.map((stop, index) => {
               const place = feed.places.find((item) => item.id === stop.discoveryId);
               if (!place) return null;
@@ -110,13 +113,18 @@ export function JourneyScreen() {
 export function GeneratingJourneyScreen() {
   const { screen, user, saveJourney } = useRamble();
   const feed = useFeed();
+  const { area } = useArea();
+  const places = useMemo(
+    () => feed.places.filter((place) => placeInArea(place.borough, area)),
+    [area, feed.places],
+  );
   useEffect(() => {
     if (!user || screen.name !== "generating-journey") return;
     const { duration, avoid } = screen;
-    const plan = buildJourney(user, feed.places, duration, avoid);
+    const plan = buildJourney(user, places, duration, avoid, undefined, area.anchor);
     const handle = window.setTimeout(() => saveJourney(plan), motionDelay(1400));
     return () => window.clearTimeout(handle);
-  }, [feed.places, saveJourney, screen, user]);
+  }, [area.anchor, places, saveJourney, screen, user]);
 
   return <Generating mark="✨" lines={LINES} />;
 }

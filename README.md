@@ -1,15 +1,23 @@
 # Ramble
 
-Ramble is a mobile-first prototype for exploring New York as a map of communities — starting in Morningside Heights, around Columbia University.
+Ramble is a mobile-first prototype for exploring New York City as a map of communities — Manhattan first, then Brooklyn, Queens, the Bronx, and Staten Island.
 
 > Turn the city from a map of places into a map of communities.
+
+## Download this version
+
+The Android build of the current app is a direct install, with no store account:
+
+[Download Ramble for Android](https://github.com/juliaywang/ramble/raw/cursor/nyc-citywide-d568/release/Ramble.apk)
+
+The same link is on the welcome screen and in Profile. On the phone, allow installs from the browser when Android asks. iPhone can use Share → Add to Home Screen on the site.
 
 ## Demo flow
 
 Create an account, pick at least three interests, then:
 
-1. Open the Explore map and a discovery.
-2. Tap **Give me a side quest**, accept it, and complete it.
+1. On Explore, switch boroughs. The map and the list follow the borough you pick. All NYC shows the five together.
+2. Open a discovery, tap **Give me a side quest**, accept it, and complete it. Quests and journeys start from that borough’s anchor (College Walk in Manhattan).
 3. Find it under **Quests → Completed**. The passport percentage moves when the quest stamps a new kind of place.
 4. Open **Journey** and tap **Build my journey**.
 
@@ -17,7 +25,7 @@ The account, quests, saved places, and passport live in this browser (`localStor
 
 ## What’s in the feed
 
-Verified places come from five NYC Open Data feeds, limited to Morningside Heights:
+Verified places come from five NYC Open Data feeds, across the city:
 
 - Farmers markets
 - Public art
@@ -32,9 +40,9 @@ A new passport opens at **50%** (Bookstore, Café, Farmers Market). Completing a
 ## Pipeline
 
 ```
-NYC Open Data (live, with a saved fallback) + Live Discovery fixtures
-  → normalize into Discovery / Community records
-  → agent (match, why, side quest, journey)
+NYC Open Data (live, with a saved citywide fallback) + Live Discovery fixtures
+  → normalize into Discovery / Community records, tagged by borough
+  → agent (match, why, side quest, journey) from the borough’s starting point
   → map
 ```
 

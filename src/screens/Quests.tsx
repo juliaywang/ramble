@@ -1,19 +1,36 @@
 import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { BackRow, Generating, PlaceMedia, SourceBadge } from "../components/ui";
 import { durationLabel, formatWhen } from "../lib/format";
 import { motionDelay } from "../lib/motion";
 import { passportLabel, passportPercent, passportRows, rollSideQuest, stampIsNew, totalXp } from "../pipeline/agent";
-import { ANCHOR, distanceMiles, formatDistance, walkMinutes } from "../pipeline/geo";
+import { distanceMiles, formatDistance, placeInArea, walkMinutes } from "../pipeline/geo";
 import { NEIGHBORHOOD } from "../pipeline/types";
+import { useArea } from "../state/AreaContext";
 import { useFeed, usePlace } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
 
-const QUEST_LINES = [
-  "Looking at what you’ve already walked…",
-  "Checking markets, pantries, and what’s on nearby…",
-  "Writing a quest within a few blocks of College Walk…",
-];
+function questLines(start: string) {
+  return [
+    "Looking at what you’ve already walked…",
+    "Checking markets, gardens, and landmarks nearby…",
+    `Writing a quest within a walk of ${start}…`,
+  ];
+}
+
+function useAreaPlaces() {
+  const feed = useFeed();
+  const { area } = useArea();
+  return useMemo(() => {
+    const places = feed.places.filter((place) => placeInArea(place.borough, area));
+    const ids = new Set(places.map((place) => place.id));
+    return {
+      area,
+      places,
+      templates: feed.questTemplates.filter((template) => ids.has(template.discoveryId)),
+    };
+  }, [area, feed.places, feed.questTemplates]);
+}
 
 export function QuestsScreen({ highlightId }: { highlightId?: string }) {
   const user = useRequiredUser();
@@ -73,7 +90,8 @@ function QuestRow({ questId, highlight }: { questId: string; highlight: boolean 
   const quest = user.quests.find((item) => item.id === questId);
   const place = usePlace(quest?.discoveryId);
   if (!quest || !place) return null;
-  const minutes = walkMinutes(distanceMiles(ANCHOR, place));
+  const { area } = useArea();
+  const minutes = walkMinutes(distanceMiles(area.anchor, place));
   return (
     <button
       type="button"
@@ -97,18 +115,18 @@ function QuestRow({ questId, highlight }: { questId: string; highlight: boolean 
 
 export function GeneratingQuestScreen() {
   const { screen, replace, user } = useRamble();
-  const feed = useFeed();
+  const { area, places, templates } = useAreaPlaces();
   useEffect(() => {
     if (!user || screen.name !== "generating-quest") return;
     const { avoid } = screen;
-    const draft = rollSideQuest(user, feed.places, feed.questTemplates, avoid);
+    const draft = rollSideQuest(user, places, templates, avoid, area.anchor);
     const handle = window.setTimeout(() => {
       replace(draft ? { name: "quest-offer", draft, avoid } : { name: "quest-empty" });
     }, motionDelay(1500));
     return () => window.clearTimeout(handle);
-  }, [feed.places, feed.questTemplates, replace, screen, user]);
+  }, [area.anchor, places, replace, screen, templates, user]);
 
-  return <Generating mark="🎲" lines={QUEST_LINES} />;
+  return <Generating mark="🎲" lines={questLines(area.anchor.label)} />;
 }
 
 export function QuestOfferScreen() {
@@ -117,7 +135,8 @@ export function QuestOfferScreen() {
   const place = usePlace(draft?.discoveryId);
   if (screen.name !== "quest-offer" || !draft || !place) return null;
   const { avoid } = screen;
-  const walk = walkMinutes(distanceMiles(ANCHOR, place));
+  const { area } = useArea();
+  const walk = walkMinutes(distanceMiles(area.anchor, place));
   const total = walk + draft.visitMinutes;
 
   return (
@@ -137,7 +156,7 @@ export function QuestOfferScreen() {
       </button>
       <div className="meta-tiles">
         <div>
-          <b>{formatDistance(distanceMiles(ANCHOR, place))}</b>
+          <b>{formatDistance(distanceMiles(area.anchor, place))}</b>
           <span>{walk} min walk</span>
         </div>
         <div>
@@ -182,7 +201,8 @@ export function QuestDetailScreen({ id }: { id: string }) {
       </section>
     );
   }
-  const walk = walkMinutes(distanceMiles(ANCHOR, place));
+  const { area } = useArea();
+  const walk = walkMinutes(distanceMiles(area.anchor, place));
   const done = quest.status === "completed";
 
   return (
@@ -196,7 +216,7 @@ export function QuestDetailScreen({ id }: { id: string }) {
         <div>
           <strong>{place.name}</strong>
           <small>
-            {formatDistance(distanceMiles(ANCHOR, place))} · {walk} min walk · {quest.visitMinutes} min there
+            {formatDistance(distanceMiles(area.anchor, place))} · {walk} min walk · {quest.visitMinutes} min there
           </small>
           <SourceBadge source={place.source} />
         </div>
@@ -289,11 +309,12 @@ export function QuestCompleteScreen({ questId }: { questId: string }) {
 
 export function QuestEmptyScreen() {
   const { tab } = useRamble();
+  const { area } = useArea();
   return (
     <section className="page">
       <p className="eyebrow">Side quests</p>
-      <h1>You’ve walked the quests in this prototype.</h1>
-      <p className="lede">Every template around Morningside Heights is active or already finished. The passport keeps the record.</p>
+      <h1>You’ve walked the quests in this slice of the city.</h1>
+      <p className="lede">Every quest around {area.name} is active or already finished. Switch boroughs on Explore, or open the passport.</p>
       <button type="button" className="btn btn-primary btn-block" onClick={() => tab({ name: "quests" })}>
         Back to quests
       </button>

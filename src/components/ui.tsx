@@ -1,5 +1,6 @@
 import { DesignIcon, categoryIcons, categoryColors } from "./DesignIcon";
 import { useEffect, useState } from "react";
+import { boroughName } from "../pipeline/geo";
 import { CATEGORIES, SOURCE_LABEL, type DataSource, type Discovery, type RankedDiscovery } from "../pipeline/types";
 import { formatDistance } from "../pipeline/geo";
 import { IconBack } from "./Icons";
@@ -45,12 +46,14 @@ export function PlaceCard({
   logged = false,
   selected = false,
   highlighted = false,
+  showBorough = false,
   onOpen,
 }: {
   place: RankedDiscovery;
   logged?: boolean;
   selected?: boolean;
   highlighted?: boolean;
+  showBorough?: boolean;
   onOpen: () => void;
 }) {
   const meta = CATEGORIES[place.category];
@@ -67,6 +70,7 @@ export function PlaceCard({
             <span className="match">{place.match}% match</span>
           </div>
           <p className="meta-line">
+            {showBorough ? `${boroughName(place.borough)} · ` : ""}
             {meta.label} · {formatDistance(place.miles)} · {place.minutes} min walk
           </p>
           <p className="why clamp-3">{place.why}</p>

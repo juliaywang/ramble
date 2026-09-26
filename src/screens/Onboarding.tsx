@@ -1,4 +1,5 @@
 import { Brand } from "../components/Brand";
+import { DownloadAppLink } from "../components/DownloadApp";
 import { DesignIcon } from "../components/DesignIcon";
 import { useState, type FormEvent } from "react";
 import { firstName } from "../lib/format";
@@ -18,7 +19,8 @@ export function WelcomeScreen() {
           <div className="welcome-actions">
             {user ? <button type="button" className="btn btn-primary" onClick={continueSession}>Continue as {firstName(user.name)} <DesignIcon name="arrow" /></button> : null}
             <button type="button" className={user ? "btn btn-ghost" : "btn btn-primary"} onClick={() => go({ name: "signup" })}>Create your account <DesignIcon name="arrow" /></button>
-            <p className="fine">{user ? "A new account replaces the one saved on this device." : "Free to explore. No credit card needed."}</p>
+            <DownloadAppLink />
+            <p className="fine">{user ? "A new account replaces the one saved on this device." : "Free to explore. No credit card needed. The download is this version, for Android."}</p>
           </div>
         </div>
         <p className="fine">Built for curious New Yorkers.</p>

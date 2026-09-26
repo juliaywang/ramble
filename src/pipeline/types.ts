@@ -1,3 +1,7 @@
+import type { BoroughId } from "./geo";
+
+export type { BoroughId };
+
 export const INTERESTS = [
   { id: "food", title: "Food", emoji: "🍜", blurb: "Markets, kitchens, late slices" },
   { id: "art", title: "Art", emoji: "🎨", blurb: "Murals, sculpture, small museums" },
@@ -58,6 +62,7 @@ export type Discovery = {
   category: CategoryId;
   source: DataSource;
   sourceDetail: string;
+  borough: BoroughId;
   lat: number;
   lng: number;
   address: string;
@@ -125,6 +130,7 @@ export type JourneyPlan = {
   signature: string;
   repeated: boolean;
   builtAt: string;
+  startLabel?: string;
 };
 
 export type UserAccount = {
@@ -158,8 +164,8 @@ export type PassportRow = {
 };
 
 export const NEIGHBORHOOD = {
-  id: "morningside-heights",
-  name: "Morningside Heights",
+  id: "new-york-city",
+  name: "New York City",
   city: "New York",
 };
 

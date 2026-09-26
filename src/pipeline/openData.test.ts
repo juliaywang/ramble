@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { passportPercent, passportRows } from "./agent";
+import { boroughName, CITY_AREAS } from "./geo";
 import { assembleFeed } from "./index";
 import { NYC_OPEN_DATA, normalizeSnapshot, stableId } from "./openData";
-import { STARTER_DISCOVERED_IDS } from "./types";
+import { STARTER_DISCOVERED_IDS, type BoroughId } from "./types";
 
 const places = normalizeSnapshot();
 const feed = assembleFeed(places, "snapshot");
@@ -48,7 +49,20 @@ describe("nyc open data snapshot", () => {
     const market = places.find((place) => place.id === "greenmarket");
     expect(market?.hours.toLowerCase()).toContain("thursday");
     expect(market?.address.toLowerCase()).toContain("broadway");
-    expect(places.filter((place) => place.category === "farmers-market").length).toBeLessThan(8);
+    expect(places.filter((place) => place.id === "greenmarket")).toHaveLength(1);
+  });
+
+  it("covers Manhattan and the other four boroughs from every dataset", () => {
+    const boroughs: BoroughId[] = ["manhattan", "brooklyn", "queens", "bronx", "staten-island"];
+    for (const borough of boroughs) {
+      const there = places.filter((place) => place.borough === borough);
+      expect(there.length, boroughName(borough)).toBeGreaterThan(10);
+      expect(new Set(there.map((place) => place.sourceDetail)).size).toBeGreaterThanOrEqual(4);
+    }
+    expect(places.filter((place) => place.borough === "manhattan").length).toBeGreaterThan(
+      places.filter((place) => place.borough === "staten-island").length,
+    );
+    expect(CITY_AREAS.map((area) => area.id)).toContain("nyc");
   });
 });
 
