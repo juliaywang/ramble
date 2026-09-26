@@ -1,4 +1,3 @@
-import { DownloadAppLink } from "../components/DownloadApp";
 import { firstName, formatWhen, greeting } from "../lib/format";
 import { passportPercent, passportRows, totalXp } from "../pipeline/agent";
 import { boroughName } from "../pipeline/geo";
@@ -150,7 +149,6 @@ export function ProfileScreen() {
       <p className="fine pipeline-note">
         Verified places across Manhattan, Brooklyn, Queens, the Bronx, and Staten Island come from five NYC Open Data feeds — markets, public art, community gardens, landmarks, and libraries, museums, and community centers.
       </p>
-      <DownloadAppLink block />
       <button type="button" className="btn btn-ghost btn-block" onClick={logOut}>
         Log out
       </button>

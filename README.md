@@ -4,14 +4,6 @@ Ramble is a mobile-first prototype for exploring New York City as a map of commu
 
 > Turn the city from a map of places into a map of communities.
 
-## Download this version
-
-The Android build of the current app is a direct install, with no store account:
-
-[Download Ramble for Android](https://github.com/juliaywang/ramble/raw/cursor/nyc-citywide-d568/release/Ramble.apk)
-
-The same link is on the welcome screen and in Profile. On the phone, allow installs from the browser when Android asks. iPhone can use Share → Add to Home Screen on the site.
-
 ## Demo flow
 
 Create an account, pick at least three interests, then:

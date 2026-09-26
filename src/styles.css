@@ -109,7 +109,6 @@ h3 { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
   justify-content: center;
   gap: 8px;
 }
-a.btn { text-decoration: none; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn:active:not(:disabled) { transform: scale(0.985); }
 .btn-block { width: 100%; }
