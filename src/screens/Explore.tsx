@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
 import { PlaceCard, SourceBadge } from "../components/ui";
 import { greeting } from "../lib/format";
-import { rankCommunities, rankDiscoveries } from "../pipeline/agent";
+import { matchScore, rankCommunities, rankDiscoveries } from "../pipeline/agent";
 import { placeInArea } from "../pipeline/geo";
 import { locationNote, useLocation } from "../state/LocationContext";
 import { INTERESTS, type InterestId } from "../pipeline/types";
@@ -18,7 +18,7 @@ export function ExploreScreen() {
   const { go } = useRamble();
   const feed = useFeed();
   const { area, setArea } = useArea();
-  const { origin, status } = useLocation();
+  const { origin, status, request } = useLocation();
   const [filter, setFilter] = useState<InterestId | "all">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE);
@@ -26,7 +26,18 @@ export function ExploreScreen() {
     () => feed.places.filter((place) => placeInArea(place.borough, area)),
     [feed.places, area],
   );
-  const ranked = useMemo(() => rankDiscoveries(user, inArea, origin), [user, inArea, origin]);
+  const ranked = useMemo(() => {
+    if (origin) return rankDiscoveries(user, inArea, origin);
+    return inArea
+      .map((place) => ({
+        ...place,
+        match: matchScore(user.interests, place.tags),
+        miles: 0,
+        minutes: 0,
+        why: place.summary,
+      }))
+      .sort((a, b) => b.match - a.match || a.name.localeCompare(b.name));
+  }, [user, inArea, origin]);
   const people = useMemo(() => rankCommunities(user, feed.communities).slice(0, 6), [user, feed.communities]);
   const visible = ranked.filter((place) => filter === "all" || place.tags.includes(filter));
   const page = visible.slice(0, shown);
@@ -45,6 +56,9 @@ export function ExploreScreen() {
     <section className="page explore-page">
       <header className="explore-head">
         <h1>{greeting(user.name)}</h1>
+        <button type="button" className="text-btn" onClick={() => go({ name: "profile" })}>
+          Edit profile
+        </button>
         <p className="meta-line">{area.name}</p>
         <p className="lede">
           {openCount} from NYC Open Data · {liveCount} live discoveries
@@ -104,14 +118,24 @@ export function ExploreScreen() {
         selectedId={selectedId}
         onSelect={setSelectedId}
         onOpen={(id) => go({ name: "place", id })}
+        onLocate={() => void request()}
       />
       <p className="map-note">
         {feed.updatedFrom === "live"
-          ? `Live pull from NYC Open Data across ${area.name}. ${locationNote(status, area.anchor.label)}`
-          : `Saved copy of NYC Open Data across ${area.name}. ${locationNote(status, area.anchor.label)}`}
+          ? `Live pull from NYC Open Data across ${area.name}. ${locationNote(status)}`
+          : `Saved copy of NYC Open Data across ${area.name}. ${locationNote(status)}`}
       </p>
 
-      <button type="button" className="sidequest-banner" onClick={() => go({ name: "generating-quest", avoid: [] })}>
+      <button
+        type="button"
+        className="sidequest-banner"
+        onClick={() => {
+          void (async () => {
+            if (!origin && !(await request())) return;
+            go({ name: "generating-quest", avoid: [] });
+          })();
+        }}
+      >
         <span className="sidequest-mark" aria-hidden="true"><DesignIcon name="dice" size="lg" /></span>
         <span>
           <strong>Give me a side quest</strong>
@@ -133,6 +157,7 @@ export function ExploreScreen() {
               logged={user.discoveredIds.includes(place.id)}
               selected={place.id === selectedId}
               showBorough={area.id === "nyc"}
+              awaitingLocation={!origin}
               onOpen={() => go({ name: "place", id: place.id })}
             />
           ))

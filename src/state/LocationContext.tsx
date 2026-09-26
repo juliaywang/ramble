@@ -1,15 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { inCity, type WalkStart } from "../pipeline/geo";
-import { useArea } from "./AreaContext";
 import { useRamble } from "./RambleContext";
 
 export type LocationStatus = "locating" | "ready" | "denied" | "unavailable" | "outside";
 
 type LocationValue = {
-  origin: WalkStart;
+  origin: WalkStart | null;
   status: LocationStatus;
   usingGps: boolean;
-  request: () => void;
+  request: () => Promise<WalkStart | null>;
 };
 
 const LocationContext = createContext<LocationValue | null>(null);
@@ -18,8 +17,11 @@ function sameFix(current: { lat: number; lng: number } | null, next: { lat: numb
   return current !== null && Math.abs(current.lat - next.lat) < 0.00002 && Math.abs(current.lng - next.lng) < 0.00002;
 }
 
+function toStart(fix: { lat: number; lng: number }): WalkStart {
+  return { label: "Your location", detail: "Current position", lat: fix.lat, lng: fix.lng };
+}
+
 export function LocationProvider({ children }: { children: ReactNode }) {
-  const { area } = useArea();
   const { session } = useRamble();
   const [fix, setFix] = useState<{ lat: number; lng: number } | null>(null);
   const [status, setStatus] = useState<LocationStatus>("locating");
@@ -28,26 +30,45 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     if (!navigator.geolocation) {
       setFix(null);
       setStatus("unavailable");
-      return;
+      return Promise.resolve(null);
     }
-    setStatus("locating");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
+    setStatus((current) => (current === "ready" ? current : "locating"));
+
+    const read = (high: boolean) =>
+      new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: high,
+          timeout: high ? 8000 : 12000,
+          maximumAge: 20000,
+        });
+      });
+
+    return read(true)
+      .catch((error: GeolocationPositionError) => {
+        if (error.code === error.TIMEOUT) return read(false);
+        throw error;
+      })
+      .then((position) => {
         const next = { lat: position.coords.latitude, lng: position.coords.longitude };
+        if (!Number.isFinite(next.lat) || !Number.isFinite(next.lng) || (next.lat === 0 && next.lng === 0)) {
+          setFix(null);
+          setStatus("unavailable");
+          return null;
+        }
         if (!inCity(next.lat, next.lng)) {
           setFix(null);
           setStatus("outside");
-          return;
+          return null;
         }
         setFix((current) => (sameFix(current, next) ? current : next));
         setStatus("ready");
-      },
-      (error) => {
+        return toStart(next);
+      })
+      .catch((error: GeolocationPositionError) => {
         setFix(null);
         setStatus(error.code === error.PERMISSION_DENIED ? "denied" : "unavailable");
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 20000 },
-    );
+        return null;
+      });
   }, []);
 
   useEffect(() => {
@@ -56,7 +77,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       setStatus("unavailable");
       return;
     }
-    request();
+    void request();
   }, [request, session]);
 
   useEffect(() => {
@@ -68,22 +89,17 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setFix((current) => (sameFix(current, next) ? current : next));
       },
       () => {},
-      { enableHighAccuracy: true, maximumAge: 20000 },
+      { enableHighAccuracy: false, maximumAge: 20000 },
     );
     return () => navigator.geolocation.clearWatch(watch);
   }, [status]);
 
   const value = useMemo<LocationValue>(() => {
-    if (fix) {
-      return {
-        origin: { label: "Your location", detail: "Current position", lat: fix.lat, lng: fix.lng },
-        status,
-        usingGps: true,
-        request,
-      };
+    if (fix && status === "ready") {
+      return { origin: toStart(fix), status, usingGps: true, request };
     }
-    return { origin: area.anchor, status, usingGps: false, request };
-  }, [area.anchor, fix, request, status]);
+    return { origin: null, status, usingGps: false, request };
+  }, [fix, request, status]);
 
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
 }
@@ -94,10 +110,10 @@ export function useLocation() {
   return ctx;
 }
 
-export function locationNote(status: LocationStatus, fallback: string) {
+export function locationNote(status: LocationStatus) {
   if (status === "ready") return "Walks start at your current location.";
-  if (status === "locating") return "Finding your location. Walks use it as soon as it arrives.";
-  if (status === "denied") return `Location is off, so walks start at ${fallback}. You can turn it on in Settings.`;
-  if (status === "outside") return `That location is outside New York City, so walks start at ${fallback}.`;
-  return `Location isn’t available, so walks start at ${fallback}.`;
+  if (status === "locating") return "Finding your location. Walks start there.";
+  if (status === "denied") return "Location is off. Allow it so walks can start where you are.";
+  if (status === "outside") return "That position is outside New York City. Ramble starts a walk from where you are in the city.";
+  return "Ramble couldn’t read your location yet. Try again so the walk starts where you are.";
 }

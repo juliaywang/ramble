@@ -1,12 +1,11 @@
 import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
 import { useEffect, useMemo } from "react";
-import { BackRow, Generating, PlaceMedia, SourceBadge } from "../components/ui";
+import { BackRow, Generating, OpenInMaps, PlaceMedia, SourceBadge } from "../components/ui";
 import { durationLabel, formatWhen } from "../lib/format";
 import { motionDelay } from "../lib/motion";
 import { passportLabel, passportPercent, passportRows, rollSideQuest, stampIsNew, totalXp } from "../pipeline/agent";
-import { distanceMiles, formatDistance, placeInArea, walkMinutes, withinWalk } from "../pipeline/geo";
+import { distanceMiles, formatDistance, walkMinutes, withinWalk } from "../pipeline/geo";
 import { NEIGHBORHOOD } from "../pipeline/types";
-import { useArea } from "../state/AreaContext";
 import { useLocation } from "../state/LocationContext";
 import { useFeed, usePlace } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
@@ -21,23 +20,22 @@ function questLines(start: string) {
 
 function useWalkPlaces() {
   const feed = useFeed();
-  const { area } = useArea();
-  const { origin, usingGps } = useLocation();
+  const { origin } = useLocation();
   return useMemo(() => {
-    const inBorough = feed.places.filter((place) => placeInArea(place.borough, area));
-    const places = usingGps ? withinWalk(feed.places, origin) : inBorough;
+    const places = origin ? withinWalk(feed.places, origin) : [];
     const ids = new Set(places.map((place) => place.id));
     return {
       origin,
       places,
       templates: feed.questTemplates.filter((template) => ids.has(template.discoveryId)),
     };
-  }, [area, feed.places, feed.questTemplates, origin, usingGps]);
+  }, [feed.places, feed.questTemplates, origin]);
 }
 
 export function QuestsScreen({ highlightId }: { highlightId?: string }) {
   const user = useRequiredUser();
   const { go } = useRamble();
+  const { origin, request } = useLocation();
   const active = user.quests.filter((quest) => quest.status === "active");
   const completed = user.quests
     .filter((quest) => quest.status === "completed")
@@ -52,7 +50,16 @@ export function QuestsScreen({ highlightId }: { highlightId?: string }) {
         <p className="lede">
           A side quest is a spontaneous stop written from NYC places, live discoveries, your interests, and the quests you’ve already finished.
         </p>
-        <button type="button" className="btn btn-clay btn-block" onClick={() => go({ name: "generating-quest", avoid: [] })}>
+        <button
+          type="button"
+          className="btn btn-clay btn-block"
+          onClick={() => {
+            void (async () => {
+              if (!origin && !(await request())) return;
+              go({ name: "generating-quest", avoid: [] });
+            })();
+          }}
+        >
           🎲 Give me a side quest
         </button>
         <p className="fine">{totalXp(user.quests)} exploration XP so far</p>
@@ -94,7 +101,7 @@ function QuestRow({ questId, highlight }: { questId: string; highlight: boolean 
   const place = usePlace(quest?.discoveryId);
   if (!quest || !place) return null;
   const { origin } = useLocation();
-  const minutes = walkMinutes(distanceMiles(origin, place));
+  const minutes = origin ? walkMinutes(distanceMiles(origin, place)) : null;
   return (
     <button
       type="button"
@@ -107,7 +114,7 @@ function QuestRow({ questId, highlight }: { questId: string; highlight: boolean 
       <span>
         <strong>{quest.title}</strong>
         <small>
-          {place.name} · {minutes + quest.visitMinutes} min · {quest.xp} XP
+          {place.name} · {minutes === null ? "location needed" : `${minutes + quest.visitMinutes} min`} · {quest.xp} XP
           {quest.status === "completed" && quest.completedAt ? ` · ${formatWhen(quest.completedAt)}` : ""}
         </small>
       </span>
@@ -120,7 +127,7 @@ export function GeneratingQuestScreen() {
   const { screen, replace, user } = useRamble();
   const { origin, places, templates } = useWalkPlaces();
   useEffect(() => {
-    if (!user || screen.name !== "generating-quest") return;
+    if (!user || !origin || screen.name !== "generating-quest") return;
     const { avoid } = screen;
     const draft = rollSideQuest(user, places, templates, avoid, origin);
     const handle = window.setTimeout(() => {
@@ -129,7 +136,7 @@ export function GeneratingQuestScreen() {
     return () => window.clearTimeout(handle);
   }, [origin, places, replace, screen, templates, user]);
 
-  return <Generating mark="🎲" lines={questLines(origin.label)} />;
+  return <Generating mark="🎲" lines={origin ? questLines(origin.label) : ["Finding where you are…"]} />;
 }
 
 export function QuestOfferScreen() {
@@ -139,8 +146,8 @@ export function QuestOfferScreen() {
   if (screen.name !== "quest-offer" || !draft || !place) return null;
   const { avoid } = screen;
   const { origin } = useLocation();
-  const walk = walkMinutes(distanceMiles(origin, place));
-  const total = walk + draft.visitMinutes;
+  const walk = origin ? walkMinutes(distanceMiles(origin, place)) : null;
+  const total = (walk ?? 0) + draft.visitMinutes;
 
   return (
     <section className="page page-dock">
@@ -159,8 +166,8 @@ export function QuestOfferScreen() {
       </button>
       <div className="meta-tiles">
         <div>
-          <b>{formatDistance(distanceMiles(origin, place))}</b>
-          <span>{walk} min walk</span>
+          <b>{origin ? formatDistance(distanceMiles(origin, place)) : "—"}</b>
+          <span>{walk === null ? "location needed" : `${walk} min walk`}</span>
         </div>
         <div>
           <b>{durationLabel(total)}</b>
@@ -176,6 +183,7 @@ export function QuestOfferScreen() {
         <p>{draft.why}</p>
       </section>
       <div className="dock">
+        <OpenInMaps place={place} />
         <button type="button" className="btn btn-clay btn-block" onClick={() => acceptQuest(draft)}>
           Accept quest
         </button>
@@ -205,7 +213,7 @@ export function QuestDetailScreen({ id }: { id: string }) {
     );
   }
   const { origin } = useLocation();
-  const walk = walkMinutes(distanceMiles(origin, place));
+  const walk = origin ? walkMinutes(distanceMiles(origin, place)) : null;
   const done = quest.status === "completed";
 
   return (
@@ -219,7 +227,8 @@ export function QuestDetailScreen({ id }: { id: string }) {
         <div>
           <strong>{place.name}</strong>
           <small>
-            {formatDistance(distanceMiles(origin, place))} · {walk} min walk · {quest.visitMinutes} min there
+            {origin ? `${formatDistance(distanceMiles(origin, place))} · ${walk} min walk · ` : ""}
+            {quest.visitMinutes} min there
           </small>
           <SourceBadge source={place.source} />
         </div>
@@ -232,8 +241,9 @@ export function QuestDetailScreen({ id }: { id: string }) {
         {quest.xp} XP · accepted {formatWhen(quest.acceptedAt)}
         {quest.completedAt ? ` · finished ${formatWhen(quest.completedAt)}` : ""}
       </p>
-      {done ? null : (
+      {done ? <OpenInMaps place={place} /> : (
         <div className="dock">
+          <OpenInMaps place={place} />
           <button type="button" className="btn btn-primary btn-block" onClick={() => completeQuest(quest.id)}>
             Complete quest
           </button>
@@ -312,17 +322,11 @@ export function QuestCompleteScreen({ questId }: { questId: string }) {
 
 export function QuestEmptyScreen() {
   const { tab } = useRamble();
-  const { usingGps } = useLocation();
-  const { area } = useArea();
   return (
     <section className="page">
       <p className="eyebrow">Side quests</p>
       <h1>You’ve walked the quests in this slice of the city.</h1>
-      <p className="lede">
-        {usingGps
-          ? "Every quest within a walk of your location is active or already finished."
-          : `Every quest around ${area.name} is active or already finished. Switch boroughs on Explore, or turn location on in Settings.`}
-      </p>
+      <p className="lede">Every quest within a walk of your location is active or already finished.</p>
       <button type="button" className="btn btn-primary btn-block" onClick={() => tab({ name: "quests" })}>
         Back to quests
       </button>

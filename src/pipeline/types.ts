@@ -136,6 +136,7 @@ export type JourneyPlan = {
 export type UserAccount = {
   name: string;
   email: string;
+  username: string;
   photo: string | null;
   bio: string;
   interests: InterestId[];

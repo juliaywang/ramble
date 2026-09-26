@@ -47,6 +47,7 @@ export function PlaceCard({
   selected = false,
   highlighted = false,
   showBorough = false,
+  awaitingLocation = false,
   onOpen,
 }: {
   place: RankedDiscovery;
@@ -54,6 +55,7 @@ export function PlaceCard({
   selected?: boolean;
   highlighted?: boolean;
   showBorough?: boolean;
+  awaitingLocation?: boolean;
   onOpen: () => void;
 }) {
   const meta = CATEGORIES[place.category];
@@ -71,7 +73,8 @@ export function PlaceCard({
           </div>
           <p className="meta-line">
             {showBorough ? `${boroughName(place.borough)} · ` : ""}
-            {meta.label} · {formatDistance(place.miles)} · {place.minutes} min walk
+            {meta.label}
+            {awaitingLocation ? "" : ` · ${formatDistance(place.miles)} · ${place.minutes} min walk`}
           </p>
           <p className="why clamp-3">{place.why}</p>
           <div className="badge-row">
@@ -111,18 +114,26 @@ function RotatingLines({ lines, fallback }: { lines: string[]; fallback: string 
   return <p>{lines[index] ?? fallback}</p>;
 }
 
+function mapsHref(place: Pick<Discovery, "lat" | "lng" | "name">) {
+  const apple = /Mac|iPhone|iPad|iPod/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
+  if (apple) {
+    return `https://maps.apple.com/?${new URLSearchParams({ daddr: `${place.lat},${place.lng}`, q: place.name, dirflg: "w" })}`;
+  }
+  return `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=walking`;
+}
+
 export function OpenInMaps({ place }: { place: Pick<Discovery, "lat" | "lng" | "name"> }) {
   return (
-        <a
-          className="open-maps"
-          href={`https://maps.apple.com/?${new URLSearchParams({ ll: `${place.lat},${place.lng}`, q: place.name })}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Open ${place.name} in Maps`}
-        >
-          <DesignIcon name="map" size="sm" />
-          Open in Maps
-          <DesignIcon name="arrow" size="sm" />
-        </a>
+    <a
+      className="open-maps"
+      href={mapsHref(place)}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Open walking directions to ${place.name} in Maps`}
+    >
+      <DesignIcon name="map" size="sm" />
+      Open in Maps
+      <DesignIcon name="arrow" size="sm" />
+    </a>
   );
 }

@@ -4,23 +4,23 @@ import { useRamble } from "../state/RambleContext";
 
 export function SettingsScreen() {
   const { back, go } = useRamble();
-  const { status, origin, usingGps, request } = useLocation();
+  const { status, origin, request } = useLocation();
 
   return (
     <section className="page">
       <BackRow onBack={back} />
       <p className="eyebrow">Settings</p>
       <h1>How Ramble walks with you.</h1>
-      <p className="lede">{locationNote(status, origin.label)}</p>
+      <p className="lede">{locationNote(status)}</p>
 
       <div className="section-head">
         <h2>Location</h2>
       </div>
       <div className="card settings-card">
         <p>
-          <strong>{usingGps ? "Using your current location" : origin.label}</strong>
+          <strong>{origin ? "Using your current location" : "Waiting for your location"}</strong>
         </p>
-        <p className="meta-line">{usingGps ? origin.detail : `${origin.detail}. This is the stand-in until location is on.`}</p>
+        <p className="meta-line">{origin ? origin.detail : "Walks start where you are. They do not start at a landmark."}</p>
         <button type="button" className="btn btn-primary" onClick={request}>
           {status === "locating" ? "Finding you…" : "Use my location"}
         </button>
@@ -52,7 +52,7 @@ export function InfoScreen() {
           Verified places come from NYC Open Data: farmers markets, public art, community gardens, and libraries, museums, and community centers. Cafés and a few neighborhood rooms stay labeled Live Discovery.
         </p>
         <p>
-          Journeys and side quests start where you are. If location is off, or you’re outside the city, they start from the anchor for the borough you’re browsing.
+          Journeys and side quests start where you are. Ramble asks for your location and does not substitute a landmark such as City Hall.
         </p>
         <p>Your account, photo, quests, and passport stay in this browser. Nothing is sent to an account server.</p>
       </div>

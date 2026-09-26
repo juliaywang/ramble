@@ -3,9 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Generating, SourceBadge, OpenInMaps } from "../components/ui";
 import { motionDelay } from "../lib/motion";
 import { buildJourney, categoryLabel } from "../pipeline/agent";
-import { placeInArea, withinWalk } from "../pipeline/geo";
+import { withinWalk } from "../pipeline/geo";
 import { type JourneyDuration } from "../pipeline/types";
-import { useArea } from "../state/AreaContext";
 import { useLocation } from "../state/LocationContext";
 import { useFeed } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
@@ -27,7 +26,7 @@ export function JourneyScreen() {
   const user = useRequiredUser();
   const { go } = useRamble();
   const feed = useFeed();
-  const { origin } = useLocation();
+  const { origin, request } = useLocation();
   const [duration, setDuration] = useState<JourneyDuration>(LENGTHS.find((option) => option.id === user.journey?.duration)?.id ?? 90);
   const plan = user.journey;
 
@@ -36,7 +35,7 @@ export function JourneyScreen() {
       <p className="eyebrow">AI journey</p>
       <h1>Build a route, not a list.</h1>
       <p className="lede">
-        Tell Ramble how long you have. It threads a few nearby stops — verified places and live discoveries — into one walk from {origin.label}.
+        Tell Ramble how long you have. It threads a few nearby stops — verified places and live discoveries — into one walk from your current location.
       </p>
       <div className="time-grid" role="radiogroup" aria-label="How much time you have">
         {LENGTHS.map((option) => (
@@ -56,13 +55,16 @@ export function JourneyScreen() {
       <button
         type="button"
         className="btn btn-primary btn-block"
-        onClick={() =>
-          go({
-            name: "generating-journey",
-            duration,
-            avoid: plan && plan.duration === duration ? plan.signature : undefined,
-          })
-        }
+        onClick={() => {
+          void (async () => {
+            if (!origin && !(await request())) return;
+            go({
+              name: "generating-journey",
+              duration,
+              avoid: plan && plan.duration === duration ? plan.signature : undefined,
+            });
+          })();
+        }}
       >
         ✨ Build my journey
       </button>
@@ -73,8 +75,11 @@ export function JourneyScreen() {
           <h2>{plan.kicker}</h2>
           <p>{plan.intro}</p>
           {plan.repeated ? <p className="fine">This is still the strongest route for that amount of time.</p> : null}
+          {plan.startLabel && plan.startLabel !== "Your location" ? (
+            <p className="fine">This route was drawn from {plan.startLabel}. Build it again to start where you are.</p>
+          ) : null}
           <ol className="route">
-            <li className="route-start">Start · {plan.startLabel ?? origin.label}</li>
+            <li className="route-start">Start · {origin?.label ?? "Your location"}</li>
             {plan.stops.map((stop, index) => {
               const place = feed.places.find((item) => item.id === stop.discoveryId);
               if (!place) return null;
@@ -114,14 +119,10 @@ export function JourneyScreen() {
 export function GeneratingJourneyScreen() {
   const { screen, user, saveJourney } = useRamble();
   const feed = useFeed();
-  const { area } = useArea();
-  const { origin, usingGps } = useLocation();
-  const places = useMemo(() => {
-    const inBorough = feed.places.filter((place) => placeInArea(place.borough, area));
-    return usingGps ? withinWalk(feed.places, origin) : inBorough;
-  }, [area, feed.places, origin, usingGps]);
+  const { origin } = useLocation();
+  const places = useMemo(() => (origin ? withinWalk(feed.places, origin) : []), [feed.places, origin]);
   useEffect(() => {
-    if (!user || screen.name !== "generating-journey") return;
+    if (!user || !origin || screen.name !== "generating-journey") return;
     const { duration, avoid } = screen;
     const plan = buildJourney(user, places, duration, avoid, undefined, origin);
     const handle = window.setTimeout(() => saveJourney(plan), motionDelay(1400));

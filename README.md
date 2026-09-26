@@ -9,7 +9,7 @@ Ramble is a mobile-first prototype for exploring New York City as a map of commu
 Create an account, pick at least three interests, then:
 
 1. On Explore, switch boroughs. The map and the list follow the borough you pick. All NYC shows the five together.
-2. Open a discovery, tap **Give me a side quest**, accept it, and complete it. Quests and journeys start at your current location. If location is off, they start from that borough’s anchor (College Walk in Manhattan).
+2. Open a discovery, tap **Give me a side quest**, accept it, and complete it. Quests and journeys start at your current location. Allow location when the browser asks. Open in Maps is on the place and on the quest. Edit profile is under the picture at the top right, and on Explore.
 3. Find it under **Quests → Completed**. The passport percentage moves when the quest stamps a new kind of place.
 4. Open **Journey** and tap **Build my journey**.
 

@@ -23,13 +23,14 @@ export type MapPlace = {
 type Props = {
   places: MapPlace[];
   area: CityArea;
-  you: WalkStart;
+  you: WalkStart | null;
+  onLocate?: () => void;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onOpen: (id: string) => void;
 };
 
-export function MapView({ places, area, you, selectedId, onSelect, onOpen }: Props) {
+export function MapView({ places, area, you, selectedId, onSelect, onOpen, onLocate }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const [zoom, setZoom] = useState(area.zoom);
@@ -39,6 +40,7 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen }: Pro
   const selected = places.find((place) => place.id === selectedId);
   const areaRef = useRef(area);
   areaRef.current = area;
+  const centeredOnYou = useRef(false);
 
   useEffect(() => {
     if (!container.current) return;
@@ -76,6 +78,15 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen }: Pro
   }, [map, area]);
 
   useEffect(() => {
+    if (!map || !you || centeredOnYou.current) return;
+    centeredOnYou.current = true;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const view: L.LatLngExpression = [you.lat, you.lng];
+    if (reduce) map.setView(view, Math.max(map.getZoom(), 15));
+    else map.flyTo(view, Math.max(map.getZoom(), 15), { duration: 0.6 });
+  }, [map, you]);
+
+  useEffect(() => {
     if (!map) return;
     const markers = L.markerClusterGroup({
       showCoverageOnHover: false,
@@ -83,13 +94,15 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen }: Pro
       spiderfyOnMaxZoom: true,
       disableClusteringAtZoom: 17,
     });
-    const start = L.circleMarker([you.lat, you.lng], {
-      radius: 7,
-      color: "white",
-      weight: 3,
-      fillColor: "#13293d",
-      fillOpacity: 1,
-    }).addTo(map).bindTooltip(`Starting point · ${you.label}`);
+    const start = you
+      ? L.circleMarker([you.lat, you.lng], {
+          radius: 7,
+          color: "white",
+          weight: 3,
+          fillColor: "#13293d",
+          fillOpacity: 1,
+        }).addTo(map).bindTooltip(`Starting point · ${you.label}`)
+      : null;
     for (const place of places) {
       if (!Number.isFinite(place.lat) || !Number.isFinite(place.lng)) continue;
       const active = selectedId === place.id;
@@ -116,7 +129,7 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen }: Pro
     map.addLayer(markers);
     return () => {
       map.removeLayer(markers);
-      map.removeLayer(start);
+      if (start) map.removeLayer(start);
     };
   }, [map, places, selectedId, you]);
 
@@ -134,13 +147,16 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen }: Pro
           <button type="button" aria-label="Zoom in" title="Zoom in" disabled={!map || zoom >= 19} onClick={() => map?.zoomIn()}>+</button>
           <button type="button" aria-label="Zoom out" title="Zoom out" disabled={!map || zoom <= 10} onClick={() => map?.zoomOut()}>−</button>
         </div>
-        <div className="map-legend"><span><i className="legend-you" /> {you.label}</span><span>Colors by activity</span></div>
+        <div className="map-legend"><span><i className="legend-you" /> {you ? you.label : "Waiting for your location"}</span><span>Colors by activity</span></div>
         <button
           type="button"
           className="map-locate"
-          onClick={() => map?.flyTo([you.lat, you.lng], Math.max(map.getZoom(), 15), { duration: 0.5 })}
+          onClick={() => {
+            if (you) map?.flyTo([you.lat, you.lng], Math.max(map.getZoom(), 15), { duration: 0.5 });
+            else onLocate?.();
+          }}
         >
-          Center on me
+          {you ? "Center on me" : "Use my location"}
         </button>
         {tileError && <p className="map-load-error" role="status">Street map couldn’t load. Check your connection.</p>}
       </div>

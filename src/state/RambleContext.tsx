@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
 import { loadPersisted, savePersisted } from "../lib/storage";
+import { usernameFromName } from "../lib/format";
 import { STARTER_DISCOVERED_IDS, type InterestId, type JourneyPlan, type QuestDraft, type UserAccount } from "../pipeline/types";
 import { type Screen } from "./screens";
 
@@ -28,7 +29,7 @@ type Action =
   | { type: "complete"; id: string }
   | { type: "abandon"; id: string }
   | { type: "journey"; plan: JourneyPlan }
-  | { type: "account"; name: string; email: string; bio: string; photo: string | null };
+  | { type: "account"; name: string; email: string; username: string; bio: string; photo: string | null };
 
 function init(): State {
   const saved = loadPersisted();
@@ -61,6 +62,7 @@ function reducer(state: State, action: Action): State {
       const user: UserAccount = {
         name: action.name.trim(),
         email: action.email.trim().toLowerCase(),
+        username: usernameFromName(action.name),
         photo: null,
         bio: "",
         interests: action.interests,
@@ -144,10 +146,12 @@ function reducer(state: State, action: Action): State {
       if (!state.user) return state;
       const name = action.name.trim();
       const email = action.email.trim().toLowerCase();
+      const username = action.username.trim().toLowerCase();
       if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return state;
+      if (!/^[a-z0-9_]{3,16}$/.test(username)) return state;
       return {
         ...state,
-        user: { ...state.user, name, email, bio: action.bio.trim(), photo: action.photo },
+        user: { ...state.user, name, email, username, bio: action.bio.trim(), photo: action.photo },
       };
     }
     case "journey":
@@ -182,7 +186,7 @@ type Api = {
   completeQuest: (id: string) => void;
   abandonQuest: (id: string) => void;
   saveJourney: (plan: JourneyPlan) => void;
-  saveAccount: (account: { name: string; email: string; bio: string; photo: string | null }) => void;
+  saveAccount: (account: { name: string; email: string; username: string; bio: string; photo: string | null }) => void;
 };
 
 const RambleContext = createContext<Api | null>(null);
