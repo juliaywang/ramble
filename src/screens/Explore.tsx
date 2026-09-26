@@ -73,8 +73,8 @@ export function ExploreScreen() {
       />
       <p className="map-note">
         {feed.updatedFrom === "live"
-          ? "Live pull from NYC Open Data, plus discoveries saved in the app. Illustrated map — not for navigation."
-          : "Saved copy of NYC Open Data, plus discoveries saved in the app. Illustrated map — not for navigation."}
+          ? "Live pull from NYC Open Data, plus discoveries saved in the app. Map centered on College Walk."
+          : "Saved copy of NYC Open Data, plus discoveries saved in the app. Map centered on College Walk."}
       </p>
 
       <button type="button" className="sidequest-banner" onClick={() => go({ name: "generating-quest", avoid: [] })}>

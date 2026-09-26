@@ -1,8 +1,9 @@
+import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
 import { useEffect, useState } from "react";
 import { Generating, SourceBadge } from "../components/ui";
 import { motionDelay } from "../lib/motion";
 import { buildJourney, categoryLabel } from "../pipeline/agent";
-import { CATEGORIES, type JourneyDuration } from "../pipeline/types";
+import { type JourneyDuration } from "../pipeline/types";
 import { useFeed } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
 
@@ -72,14 +73,13 @@ export function JourneyScreen() {
             {plan.stops.map((stop, index) => {
               const place = feed.places.find((item) => item.id === stop.discoveryId);
               if (!place) return null;
-              const meta = CATEGORIES[place.category];
               return (
                 <li key={stop.discoveryId}>
                   <div className="leg">{stop.walkMinutes} min walk</div>
                   <button type="button" className="card stop-card" onClick={() => go({ name: "place", id: place.id })}>
                     <span className="stop-index">{index + 1}</span>
-                    <span className="stop-emoji" aria-hidden="true">
-                      {meta.emoji}
+                    <span className="stop-emoji category-icon" style={{ background: categoryColors[place.category] }} aria-hidden="true">
+                      <DesignIcon name={categoryIcons[place.category]} />
                     </span>
                     <span>
                       <strong>{place.name}</strong>

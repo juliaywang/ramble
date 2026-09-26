@@ -1,10 +1,11 @@
+import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
 import { useEffect } from "react";
 import { BackRow, Generating, PlaceMedia, SourceBadge } from "../components/ui";
 import { durationLabel, formatWhen } from "../lib/format";
 import { motionDelay } from "../lib/motion";
 import { passportLabel, passportPercent, passportRows, rollSideQuest, stampIsNew, totalXp } from "../pipeline/agent";
 import { ANCHOR, distanceMiles, formatDistance, walkMinutes } from "../pipeline/geo";
-import { CATEGORIES, NEIGHBORHOOD } from "../pipeline/types";
+import { NEIGHBORHOOD } from "../pipeline/types";
 import { useFeed, usePlace } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
 
@@ -79,8 +80,8 @@ function QuestRow({ questId, highlight }: { questId: string; highlight: boolean 
       className={highlight ? "card quest-row is-highlight" : "card quest-row"}
       onClick={() => go({ name: "quest", id: quest.id })}
     >
-      <span className="quest-row-mark" aria-hidden="true">
-        {CATEGORIES[place.category].emoji}
+      <span className="quest-row-mark category-icon" style={{ background: categoryColors[place.category] }} aria-hidden="true">
+        <DesignIcon name={categoryIcons[place.category]} />
       </span>
       <span>
         <strong>{quest.title}</strong>

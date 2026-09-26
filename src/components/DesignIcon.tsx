@@ -1,3 +1,4 @@
+import type { CategoryId } from "../pipeline/types";
 import type { ReactNode } from "react";
 
 export type IconName =
@@ -44,7 +45,14 @@ const iconPaths: Record<IconName, ReactNode> = {
   leaf: <><path d="M20 4c-8 0-14 3-14 9a5 5 0 0 0 5 5c6 0 9-6 9-14Z" /><path d="M4 21c2-5 6-9 12-12" /></>,
   map: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z" /><path d="M9 3v15M15 6v15" /></>,
   music: <><path d="M9 18V5l10-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" /></>,
-  palette: <><path d="M12 3a9 9 0 0 0 0 18h1.5a2 2 0 0 0 0-4H12a2 2 0 0 1 0-4h3a6 6 0 0 0 0-12Z" /><path d="M7.5 10h.01M9 6.5h.01M14 6h.01M17.5 9h.01" /></>,
+  palette: <>
+    <path d="M12 3C6.5 3 3 6.8 3 12a9 9 0 0 0 9 9h1.2a2.3 2.3 0 0 0 1.7-3.8 1.6 1.6 0 0 1 1.2-2.7H18c2 0 3-1.6 3-3.5C21 6.5 17 3 12 3Z" />
+    <circle cx="7" cy="10" r="1.25" fill="currentColor" stroke="none" />
+    <circle cx="10.5" cy="6.8" r="1.25" fill="currentColor" stroke="none" />
+    <circle cx="15.2" cy="7" r="1.25" fill="currentColor" stroke="none" />
+    <circle cx="18" cy="10.5" r="1.25" fill="currentColor" stroke="none" />
+    <ellipse cx="8.5" cy="15.5" rx="1.5" ry="2" transform="rotate(-30 8.5 15.5)" />
+  </>,
   pin: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
   route: <><circle cx="6" cy="19" r="2" /><circle cx="18" cy="5" r="2" /><path d="M8 19h3a3 3 0 0 0 3-3v-1a3 3 0 0 0-3-3h-1a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h6" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
@@ -79,4 +87,15 @@ export const categoryIcons: Record<string, IconName> = {
   cafe: "coffee", gaming: "dice", library: "book", "public-art": "palette",
   historic: "building", park: "leaf", garden: "leaf", museum: "palette",
   music: "music", culture: "building", food: "coffee", market: "leaf",
+};
+
+// Shared across map pins, discovery cards, and quest destinations.
+export const categoryColors: Record<CategoryId, string> = {
+  bookstore: "#94642f", library: "#94642f",
+  "farmers-market": "#b45b32", food: "#b45b32", market: "#b45b32",
+  cafe: "#805044", gaming: "#5266a8",
+  "public-art": "#bf4845", museum: "#bf4845",
+  historic: "#397f91", culture: "#397f91",
+  park: "#4d7a59", garden: "#4d7a59",
+  music: "#7953a3", "food-donation": "#ad4854",
 };
