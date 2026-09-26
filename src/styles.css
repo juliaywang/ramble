@@ -1082,3 +1082,23 @@ h2 { font-size: 20px; line-height: 1.3; }
 .stat-link { text-align: left; color: inherit; transition: background 160ms, border-color 160ms; }
 .stat-link:hover { background: #f5d9e3; border-color: var(--clay); }
 .profile-anchor { scroll-margin-top: 20px; }
+
+/* Reserve space for the interest actions above the persistent navigation. */
+.interests-page { padding-bottom: 136px; }
+.has-nav .interests-page .auth-save {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--nav-h);
+  z-index: 30;
+  margin: 0;
+  padding: 12px 20px 16px;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 20px #13293d08;
+}
+.interests-page .auth-save .fine { margin: 0; }
+.interests-page .interest { scroll-margin-bottom: 136px; min-width: 0; }
+
+.discovery-filters { flex-wrap: wrap; overflow: visible; gap: 8px; }
+.discovery-filters .chip { padding: 9px 13px; min-height: 40px; }

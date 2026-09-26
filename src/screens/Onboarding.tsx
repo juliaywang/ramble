@@ -127,7 +127,7 @@ export function InterestsScreen() {
   }
 
   return (
-    <section className="page auth-page">
+    <section className="page auth-page interests-page">
       <button type="button" className="back-btn" onClick={back}>
         Back
       </button>
@@ -155,7 +155,7 @@ export function InterestsScreen() {
         })}
       </div>
       <div className="auth-save">
-        <p className="fine">{selected.length} selected · 3 minimum</p>
+        <p className="fine" role="status">{selected.length} selected · 3 minimum</p>
         <button type="button" className="btn btn-primary btn-block" disabled={selected.length < 3} onClick={save}>
           {editing ? "Save interests" : "Start rambling"}
         </button>

@@ -31,7 +31,7 @@ export function isTab(screen: Screen): screen is { name: TabName } {
 }
 
 export function tabOf(screen: Screen): TabName | null {
-  if (screen.name === "place" || screen.name === "community") return "explore";
+  if (screen.name === "explore" || screen.name === "place" || screen.name === "community") return "explore";
   if (
     screen.name === "quests" ||
     screen.name === "generating-quest" ||

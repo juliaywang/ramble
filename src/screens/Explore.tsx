@@ -48,7 +48,7 @@ export function ExploreScreen() {
         </button>
       ) : null}
 
-      <div className="chips" role="toolbar" aria-label="Filter discoveries">
+      <div className="chips discovery-filters" role="group" aria-label="Filter discoveries">
         {chips.map((chip) => (
           <button
             key={chip.id}
