@@ -14,6 +14,10 @@ type LocationValue = {
 
 const LocationContext = createContext<LocationValue | null>(null);
 
+function sameFix(current: { lat: number; lng: number } | null, next: { lat: number; lng: number }) {
+  return current !== null && Math.abs(current.lat - next.lat) < 0.00002 && Math.abs(current.lng - next.lng) < 0.00002;
+}
+
 export function LocationProvider({ children }: { children: ReactNode }) {
   const { area } = useArea();
   const { session } = useRamble();
@@ -35,7 +39,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           setStatus("outside");
           return;
         }
-        setFix(next);
+        setFix((current) => (sameFix(current, next) ? current : next));
         setStatus("ready");
       },
       (error) => {
@@ -61,7 +65,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       (position) => {
         const next = { lat: position.coords.latitude, lng: position.coords.longitude };
         if (!inCity(next.lat, next.lng)) return;
-        setFix(next);
+        setFix((current) => (sameFix(current, next) ? current : next));
       },
       () => {},
       { enableHighAccuracy: true, maximumAge: 20000 },
