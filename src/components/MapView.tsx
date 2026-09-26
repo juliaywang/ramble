@@ -1,3 +1,4 @@
+import { DesignIcon, categoryIcons } from "./DesignIcon";
 import { ANCHOR, MAP_H, MAP_W, project } from "../pipeline/geo";
 import { CATEGORIES, type CategoryId, type DataSource } from "../pipeline/types";
 
@@ -105,13 +106,13 @@ export function MapView({ places, selectedId, onSelect, onOpen }: Props) {
 
   return (
     <div className="map-frame">
-      <svg className="map-svg" viewBox={`0 0 ${MAP_W} ${MAP_H}`} role="img" aria-label="Illustrated map of Morningside Heights">
-        <rect width={MAP_W} height={MAP_H} fill="#efe4d2" />
-        <polygon points={line([[40.8172, -73.9742], [40.7992, -73.9742], [40.7992, -73.9722], [40.806, -73.9716], [40.812, -73.9692], [40.8172, -73.9676]])} fill="#c3d7df" />
+      <svg className="map-svg" preserveAspectRatio="none" viewBox={`0 0 ${MAP_W} ${MAP_H}`} role="img" aria-label="Illustrated map of Morningside Heights">
+        <rect width={MAP_W} height={MAP_H} fill="#e0e3d8" />
+        <polygon points={line([[40.8172, -73.9742], [40.7992, -73.9742], [40.7992, -73.9722], [40.806, -73.9716], [40.812, -73.9692], [40.8172, -73.9676]])} fill="#d0dde0" />
         <polygon points={line([[40.8008, -73.9724], [40.8062, -73.9714], [40.8102, -73.9696], [40.8142, -73.9668], [40.8166, -73.9648], [40.8166, -73.9626], [40.8134, -73.963], [40.8115, -73.9633], [40.8086, -73.9664], [40.8042, -73.969], [40.8008, -73.9708]])} fill="#c9dec3" />
         <polygon points={line([[40.8016, -73.9594], [40.8148, -73.9568], [40.8148, -73.9552], [40.8016, -73.9576]])} fill="#c5d8bf" />
         <polygon points={line([[40.8112, -73.9638], [40.8132, -73.9634], [40.8132, -73.9616], [40.8114, -73.9618]])} fill="#d5e6cf" />
-        <polygon points={line([[40.806, -73.9653], [40.8116, -73.9624], [40.8116, -73.9562], [40.806, -73.9602]])} fill="#e7d4b2" />
+        <polygon points={line([[40.806, -73.9653], [40.8116, -73.9624], [40.8116, -73.9562], [40.806, -73.9602]])} fill="#e8dfdc" />
         <polyline points={line(BROADWAY)} fill="none" stroke="rgba(72,52,32,0.72)" strokeWidth="3.2" strokeLinecap="round" />
         <polyline points={line(AMSTERDAM)} fill="none" stroke="rgba(90,68,44,0.48)" strokeWidth="2.2" strokeLinecap="round" />
         <polyline points={line(RIVERSIDE)} fill="none" stroke="rgba(90,68,44,0.48)" strokeWidth="2.2" strokeLinecap="round" />
@@ -130,15 +131,15 @@ export function MapView({ places, selectedId, onSelect, onOpen }: Props) {
             />
           );
         })}
-        <text x="18" y="250" fill="#5d7380" fontSize="11" fontFamily="Fraunces, Georgia, serif">Hudson</text>
-        <text x="78" y="168" fill="#3f624c" fontSize="11" fontFamily="Fraunces, Georgia, serif">Riverside Park</text>
-        <text x="168" y="250" fill="#6d5738" fontSize="12" fontFamily="Fraunces, Georgia, serif">Columbia</text>
-        <text x="248" y="188" fill="#3f624c" fontSize="11" fontFamily="Fraunces, Georgia, serif">Morningside Park</text>
-        <text x="198" y="78" fill="#5c5146" fontSize="10" fontFamily="Outfit, sans-serif">122</text>
-        <text x="150" y="214" fill="#5c5146" fontSize="10" fontFamily="Outfit, sans-serif">116</text>
-        <text x="118" y="300" fill="#5c5146" fontSize="10" fontFamily="Outfit, sans-serif">110</text>
-        <text x="86" y="430" fill="#6a5a48" fontSize="11" fontFamily="Outfit, sans-serif">Broadway</text>
-        <text x="300" y="40" fill="#6a5a48" fontSize="10" fontFamily="Outfit, sans-serif">N</text>
+        <text x="18" y="250" fill="#5d7380" fontSize="11" fontFamily="Manrope, sans-serif">Hudson</text>
+        <text x="78" y="168" fill="#3f624c" fontSize="11" fontFamily="Manrope, sans-serif">Riverside Park</text>
+        <text x="168" y="250" fill="#6d5738" fontSize="12" fontFamily="Manrope, sans-serif">Columbia</text>
+        <text x="248" y="188" fill="#3f624c" fontSize="11" fontFamily="Manrope, sans-serif">Morningside Park</text>
+        <text x="198" y="78" fill="#5c5146" fontSize="10" fontFamily="Manrope, sans-serif">122</text>
+        <text x="150" y="214" fill="#5c5146" fontSize="10" fontFamily="Manrope, sans-serif">116</text>
+        <text x="118" y="300" fill="#5c5146" fontSize="10" fontFamily="Manrope, sans-serif">110</text>
+        <text x="86" y="430" fill="#6a5a48" fontSize="11" fontFamily="Manrope, sans-serif">Broadway</text>
+        <text x="300" y="40" fill="#6a5a48" fontSize="10" fontFamily="Manrope, sans-serif">N</text>
       </svg>
       <div className="map-pins">
         <button type="button" className="map-hit" tabIndex={-1} aria-label="Clear selection" onClick={() => onSelect(null)} />
@@ -165,7 +166,7 @@ export function MapView({ places, selectedId, onSelect, onOpen }: Props) {
                 else onSelect(place.id);
               }}
             >
-              <span aria-hidden="true">{meta.emoji}</span>
+              <span aria-hidden="true"><DesignIcon name={categoryIcons[place.category] ?? "pin"} size="sm" /></span>
             </button>
           );
         })}

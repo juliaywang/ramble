@@ -1,3 +1,5 @@
+import { Brand } from "../components/Brand";
+import { DesignIcon } from "../components/DesignIcon";
 import { useState, type FormEvent } from "react";
 import { firstName } from "../lib/format";
 import { INTERESTS, type InterestId } from "../pipeline/types";
@@ -7,25 +9,31 @@ export function WelcomeScreen() {
   const { user, go, continueSession } = useRamble();
   return (
     <section className="welcome">
-      <Skyline />
-      <div className="welcome-copy">
-        <p className="eyebrow">Morningside Heights</p>
-        <h1 className="wordmark">Ramble</h1>
-        <p className="tagline">Turn the city from a map of places into a map of communities.</p>
-        <p className="lede">
-          A walking companion for the blocks around Columbia — markets, mutual aid, chapels, game cafés, and the people who keep them going.
-        </p>
+      <div className="welcome-main">
+        <Brand />
+        <div className="welcome-copy">
+          <p className="welcome-badge"><DesignIcon name="sparkles" size="sm" /> A new way to explore your city</p>
+          <h1>Find the city<br /><span>between</span> the pins.</h1>
+          <p className="lede">Ramble turns New York from a map of places into a map of communities, stories, and unexpected adventures.</p>
+          <div className="welcome-actions">
+            {user ? <button type="button" className="btn btn-primary" onClick={continueSession}>Continue as {firstName(user.name)} <DesignIcon name="arrow" /></button> : null}
+            <button type="button" className={user ? "btn btn-ghost" : "btn btn-primary"} onClick={() => go({ name: "signup" })}>Create your account <DesignIcon name="arrow" /></button>
+            <p className="fine">{user ? "A new account replaces the one saved on this device." : "Free to explore. No credit card needed."}</p>
+          </div>
+        </div>
+        <p className="fine">Built for curious New Yorkers.</p>
       </div>
-      <div className="welcome-actions">
-        {user ? (
-          <button type="button" className="btn btn-primary btn-block" onClick={continueSession}>
-            Continue as {firstName(user.name)}
-          </button>
-        ) : null}
-        <button type="button" className={user ? "btn btn-ghost btn-block" : "btn btn-clay btn-block"} onClick={() => go({ name: "signup" })}>
-          Create account
-        </button>
-        {user ? <p className="fine">A new account replaces the one saved on this device.</p> : null}
+      <div className="welcome-art" aria-hidden="true">
+        <div className="city-grid" />
+        <div className="welcome-preview">
+          <div className="preview-place">
+            <div className="preview-top"><span className="preview-icon"><DesignIcon name="book" size="lg" /></span><span className="match">98% match</span></div>
+            <h2>Book Culture</h2>
+            <p className="meta-line">Independent bookstore · 0.2 mi</p>
+            <p className="preview-why"><DesignIcon name="sparkles" size="sm" /> Because you love books and neighborhood staples</p>
+          </div>
+          <div className="preview-quest"><strong><DesignIcon name="dice" /> Side quest</strong><h2>Find a new favorite read</h2><p>+150 XP · 30 min</p></div>
+        </div>
       </div>
     </section>
   );
@@ -153,26 +161,5 @@ export function InterestsScreen() {
         </button>
       </div>
     </section>
-  );
-}
-
-function Skyline() {
-  return (
-    <svg className="skyline" viewBox="0 0 360 150" aria-hidden="true">
-      <path d="M0 118c28-10 48-8 70-2 18 5 30 2 48-6 22-10 40-6 62 2 20 7 36 4 54-4 22-10 40-8 70 2 18 6 32 4 56-2v42H0V118z" fill="#d5e6ea" />
-      <path d="M0 128c40 6 70-4 110 2s70 8 110-2 80 4 140-6v28H0v-22z" fill="#c5d9bf" />
-      <path d="M18 112V78h16l6 10 6-10h16v34" fill="#e7d7c2" stroke="#1c1915" strokeWidth="1.4" />
-      <path d="M24 96h8M40 96h8M24 104h8M40 104h8" stroke="#1c1915" strokeWidth="1.2" />
-      <path d="M86 112V64h22v48" fill="#efe6d8" stroke="#1c1915" strokeWidth="1.4" />
-      <path d="M92 78h10M92 90h10M92 102h10" stroke="#1c1915" strokeWidth="1.2" />
-      <path d="M132 112V88h46v24" fill="#e4cbb0" stroke="#1c1915" strokeWidth="1.4" />
-      <circle cx="155" cy="74" r="16" fill="none" stroke="#1c1915" strokeWidth="1.4" />
-      <path d="M155 58v-14M147 66h16" stroke="#1c1915" strokeWidth="1.3" />
-      <rect x="148" y="96" width="14" height="16" fill="#f7f1e6" stroke="#1c1915" strokeWidth="1.2" />
-      <path d="M196 112V70h18v42M220 112V82h28v30" fill="#efe2cf" stroke="#1c1915" strokeWidth="1.4" />
-      <path d="M270 112c8-28 14-44 22-44s14 16 22 44" fill="#2f6b50" />
-      <circle cx="292" cy="60" r="14" fill="#3d7a5c" />
-      <path d="M248 112V90h12v22" fill="#d7c4a4" stroke="#1c1915" strokeWidth="1.2" />
-    </svg>
   );
 }

@@ -1,3 +1,4 @@
+import { DesignIcon, categoryIcons } from "./DesignIcon";
 import { useEffect, useState } from "react";
 import { CATEGORIES, SOURCE_LABEL, type DataSource, type Discovery, type RankedDiscovery } from "../pipeline/types";
 import { formatDistance } from "../pipeline/geo";
@@ -21,7 +22,7 @@ export function PlaceMedia({ place, tall = false }: { place: Discovery; tall?: b
       style={{ background: meta.tint, color: meta.ink }}
     >
       <span className="media-emoji" aria-hidden="true">
-        {meta.emoji}
+        <DesignIcon name={categoryIcons[place.category] ?? "pin"} size="lg" />
       </span>
       <span className="media-cat">{meta.label}</span>
     </div>

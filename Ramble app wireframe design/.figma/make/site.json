@@ -1,0 +1,10 @@
+{
+  "description": "Discover NYC neighborhoods through personalized AI-powered quests, events, and community spots tailored for college students and young adults.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
