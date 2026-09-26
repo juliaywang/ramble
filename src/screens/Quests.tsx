@@ -13,7 +13,7 @@ import { useRamble, useRequiredUser } from "../state/RambleContext";
 function questLines(start: string) {
   return [
     "Looking at what you’ve already walked…",
-    "Checking markets, gardens, and landmarks nearby…",
+    "Checking markets, gardens, and libraries nearby…",
     `Writing a quest within a walk of ${start}…`,
   ];
 }

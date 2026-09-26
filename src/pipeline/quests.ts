@@ -38,24 +38,6 @@ export const QUEST_TEMPLATES: QuestTemplate[] = [
     xp: 35,
   },
   {
-    id: "quest-unfinished",
-    discoveryId: "cathedral",
-    title: "The unfinished tower",
-    objective:
-      "Step onto the cathedral grounds and find one detail that shows the building is still unfinished. A peacock, if one is out, is a second detail, not the first.",
-    visitMinutes: 30,
-    xp: 45,
-  },
-  {
-    id: "quest-benches",
-    discoveryId: "grants-tomb",
-    title: "The monument and the benches",
-    objective:
-      "Walk up to General Grant National Memorial and read one inscription. On the way out, sit on a mosaic bench and notice that the monument and the benches were made by very different hands.",
-    visitMinutes: 25,
-    xp: 40,
-  },
-  {
     id: "quest-rules",
     discoveryId: "hex",
     title: "Learn a game you didn't bring",

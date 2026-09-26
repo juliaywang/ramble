@@ -17,12 +17,11 @@ The account, quests, saved places, and passport live in this browser (`localStor
 
 ## What’s in the feed
 
-Verified places come from five NYC Open Data feeds, across the city:
+Verified places come from NYC Open Data, across the city:
 
 - Farmers markets
 - Public art
 - GreenThumb community gardens
-- Individual landmarks
 - Libraries, museums, and community centers
 
 The app starts from a saved copy of those rows, then refreshes each dataset in the browser. If one request fails, that dataset stays on the saved copy. Cafés, the game café, concerts, parks, and the food pantry stay in the app as **Live Discovery** until a search client exists.

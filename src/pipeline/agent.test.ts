@@ -109,10 +109,10 @@ describe("journeys", () => {
 });
 
 describe("distances", () => {
-  it("puts Grant's Tomb farther from College Walk than the greenmarket", () => {
+  it("puts Sakura Park farther from College Walk than the greenmarket", () => {
     const market = DISCOVERIES.find((place) => place.id === "greenmarket");
-    const tomb = DISCOVERIES.find((place) => place.id === "grants-tomb");
-    expect(market && tomb).toBeTruthy();
-    expect(distanceMiles(ANCHOR, tomb!)).toBeGreaterThan(distanceMiles(ANCHOR, market!));
+    const park = DISCOVERIES.find((place) => place.id === "sakura");
+    expect(market && park).toBeTruthy();
+    expect(distanceMiles(ANCHOR, park!)).toBeGreaterThan(distanceMiles(ANCHOR, market!));
   });
 });

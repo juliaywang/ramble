@@ -147,7 +147,7 @@ export function ProfileScreen() {
       </ul>
 
       <p className="fine pipeline-note">
-        Verified places across Manhattan, Brooklyn, Queens, the Bronx, and Staten Island come from five NYC Open Data feeds — markets, public art, community gardens, landmarks, and libraries, museums, and community centers.
+        Verified places across Manhattan, Brooklyn, Queens, the Bronx, and Staten Island come from NYC Open Data — markets, public art, community gardens, and libraries, museums, and community centers.
       </p>
       <button type="button" className="btn btn-ghost btn-block" onClick={logOut}>
         Log out
