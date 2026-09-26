@@ -27,7 +27,8 @@ type Action =
   | { type: "accept"; draft: QuestDraft }
   | { type: "complete"; id: string }
   | { type: "abandon"; id: string }
-  | { type: "journey"; plan: JourneyPlan };
+  | { type: "journey"; plan: JourneyPlan }
+  | { type: "account"; name: string; email: string; bio: string; photo: string | null };
 
 function init(): State {
   const saved = loadPersisted();
@@ -60,6 +61,8 @@ function reducer(state: State, action: Action): State {
       const user: UserAccount = {
         name: action.name.trim(),
         email: action.email.trim().toLowerCase(),
+        photo: null,
+        bio: "",
         interests: action.interests,
         discoveredIds: [...STARTER_DISCOVERED_IDS],
         savedIds: [],
@@ -137,6 +140,16 @@ function reducer(state: State, action: Action): State {
         screen,
       };
     }
+    case "account": {
+      if (!state.user) return state;
+      const name = action.name.trim();
+      const email = action.email.trim().toLowerCase();
+      if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return state;
+      return {
+        ...state,
+        user: { ...state.user, name, email, bio: action.bio.trim(), photo: action.photo },
+      };
+    }
     case "journey":
       if (!state.user) return state;
       return {
@@ -169,6 +182,7 @@ type Api = {
   completeQuest: (id: string) => void;
   abandonQuest: (id: string) => void;
   saveJourney: (plan: JourneyPlan) => void;
+  saveAccount: (account: { name: string; email: string; bio: string; photo: string | null }) => void;
 };
 
 const RambleContext = createContext<Api | null>(null);
@@ -206,6 +220,7 @@ export function RambleProvider({ children }: { children: ReactNode }) {
       completeQuest: (id) => dispatch({ type: "complete", id }),
       abandonQuest: (id) => dispatch({ type: "abandon", id }),
       saveJourney: (plan) => dispatch({ type: "journey", plan }),
+      saveAccount: (account) => dispatch({ type: "account", ...account }),
     }),
     [state.pending, state.screen, state.session, state.user],
   );

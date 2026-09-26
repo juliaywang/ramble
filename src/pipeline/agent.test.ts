@@ -7,7 +7,7 @@ import {
   rollSideQuest,
 } from "./agent";
 import { DISCOVERIES } from "./feed";
-import { ANCHOR, distanceMiles } from "./geo";
+import { ANCHOR, distanceMiles, withinWalk } from "./geo";
 import { assembleFeed } from "./index";
 import { normalizeSnapshot } from "./openData";
 import { QUEST_TEMPLATES } from "./quests";
@@ -114,5 +114,13 @@ describe("distances", () => {
     const park = DISCOVERIES.find((place) => place.id === "sakura");
     expect(market && park).toBeTruthy();
     expect(distanceMiles(ANCHOR, park!)).toBeGreaterThan(distanceMiles(ANCHOR, market!));
+  });
+
+  it("keeps a walk inside a short radius of the start", () => {
+    const near = withinWalk(DISCOVERIES, ANCHOR);
+    expect(near.length).toBeGreaterThanOrEqual(4);
+    const farthest = Math.max(...near.map((place) => distanceMiles(ANCHOR, place)));
+    const tight = DISCOVERIES.filter((place) => distanceMiles(ANCHOR, place) <= 1.25);
+    expect(farthest).toBeLessThanOrEqual(tight.length >= 4 ? 1.25 : 5);
   });
 });

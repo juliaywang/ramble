@@ -5,6 +5,7 @@ import { PlaceCard, SourceBadge } from "../components/ui";
 import { greeting } from "../lib/format";
 import { rankCommunities, rankDiscoveries } from "../pipeline/agent";
 import { placeInArea } from "../pipeline/geo";
+import { locationNote, useLocation } from "../state/LocationContext";
 import { INTERESTS, type InterestId } from "../pipeline/types";
 import { CITY_AREAS, useArea } from "../state/AreaContext";
 import { useFeed } from "../state/FeedContext";
@@ -17,6 +18,7 @@ export function ExploreScreen() {
   const { go } = useRamble();
   const feed = useFeed();
   const { area, setArea } = useArea();
+  const { origin, status } = useLocation();
   const [filter, setFilter] = useState<InterestId | "all">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE);
@@ -24,7 +26,7 @@ export function ExploreScreen() {
     () => feed.places.filter((place) => placeInArea(place.borough, area)),
     [feed.places, area],
   );
-  const ranked = useMemo(() => rankDiscoveries(user, inArea, area.anchor), [user, inArea, area.anchor]);
+  const ranked = useMemo(() => rankDiscoveries(user, inArea, origin), [user, inArea, origin]);
   const people = useMemo(() => rankCommunities(user, feed.communities).slice(0, 6), [user, feed.communities]);
   const visible = ranked.filter((place) => filter === "all" || place.tags.includes(filter));
   const page = visible.slice(0, shown);
@@ -98,14 +100,15 @@ export function ExploreScreen() {
       <MapView
         places={visible}
         area={area}
+        you={origin}
         selectedId={selectedId}
         onSelect={setSelectedId}
         onOpen={(id) => go({ name: "place", id })}
       />
       <p className="map-note">
         {feed.updatedFrom === "live"
-          ? `Live pull from NYC Open Data across ${area.name}. Walks start at ${area.anchor.label}.`
-          : `Saved copy of NYC Open Data across ${area.name}. Walks start at ${area.anchor.label}.`}
+          ? `Live pull from NYC Open Data across ${area.name}. ${locationNote(status, area.anchor.label)}`
+          : `Saved copy of NYC Open Data across ${area.name}. ${locationNote(status, area.anchor.label)}`}
       </p>
 
       <button type="button" className="sidequest-banner" onClick={() => go({ name: "generating-quest", avoid: [] })}>

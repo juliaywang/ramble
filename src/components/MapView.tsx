@@ -6,7 +6,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { DesignIcon, categoryIcons, categoryColors } from "./DesignIcon";
-import type { CityArea } from "../pipeline/geo";
+import type { CityArea, WalkStart } from "../pipeline/geo";
 import { CATEGORIES, type CategoryId, type DataSource } from "../pipeline/types";
 
 export type MapPlace = {
@@ -23,12 +23,13 @@ export type MapPlace = {
 type Props = {
   places: MapPlace[];
   area: CityArea;
+  you: WalkStart;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onOpen: (id: string) => void;
 };
 
-export function MapView({ places, area, selectedId, onSelect, onOpen }: Props) {
+export function MapView({ places, area, you, selectedId, onSelect, onOpen }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const [zoom, setZoom] = useState(area.zoom);
@@ -82,13 +83,13 @@ export function MapView({ places, area, selectedId, onSelect, onOpen }: Props) {
       spiderfyOnMaxZoom: true,
       disableClusteringAtZoom: 17,
     });
-    const start = L.circleMarker([area.anchor.lat, area.anchor.lng], {
+    const start = L.circleMarker([you.lat, you.lng], {
       radius: 7,
       color: "white",
       weight: 3,
       fillColor: "#13293d",
       fillOpacity: 1,
-    }).addTo(map).bindTooltip(`Starting point · ${area.anchor.label}`);
+    }).addTo(map).bindTooltip(`Starting point · ${you.label}`);
     for (const place of places) {
       if (!Number.isFinite(place.lat) || !Number.isFinite(place.lng)) continue;
       const active = selectedId === place.id;
@@ -117,7 +118,7 @@ export function MapView({ places, area, selectedId, onSelect, onOpen }: Props) {
       map.removeLayer(markers);
       map.removeLayer(start);
     };
-  }, [map, places, selectedId, area.anchor]);
+  }, [map, places, selectedId, you]);
 
   return (
     <div className="map-frame street-map-frame">
@@ -133,7 +134,14 @@ export function MapView({ places, area, selectedId, onSelect, onOpen }: Props) {
           <button type="button" aria-label="Zoom in" title="Zoom in" disabled={!map || zoom >= 19} onClick={() => map?.zoomIn()}>+</button>
           <button type="button" aria-label="Zoom out" title="Zoom out" disabled={!map || zoom <= 10} onClick={() => map?.zoomOut()}>−</button>
         </div>
-        <div className="map-legend"><span><i className="legend-you" /> {area.anchor.label}</span><span>Colors by activity</span></div>
+        <div className="map-legend"><span><i className="legend-you" /> {you.label}</span><span>Colors by activity</span></div>
+        <button
+          type="button"
+          className="map-locate"
+          onClick={() => map?.flyTo([you.lat, you.lng], Math.max(map.getZoom(), 15), { duration: 0.5 })}
+        >
+          Center on me
+        </button>
         {tileError && <p className="map-load-error" role="status">Street map couldn’t load. Check your connection.</p>}
       </div>
     </div>

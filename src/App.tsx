@@ -1,10 +1,12 @@
-import { IconBook, IconCompass, IconDice, IconPath, IconPerson } from "./components/Icons";
+import { AccountMenu } from "./components/AccountMenu";
+import { IconBook, IconCompass, IconDice, IconPath } from "./components/Icons";
 import { CommunityScreen, PlaceScreen } from "./screens/Details";
 import { ExploreScreen } from "./screens/Explore";
 import { GeneratingJourneyScreen, JourneyScreen } from "./screens/Journey";
 import { InterestsScreen, SignupScreen, WelcomeScreen } from "./screens/Onboarding";
 import { PassportScreen } from "./screens/Passport";
 import { ProfileScreen } from "./screens/Profile";
+import { InfoScreen, SettingsScreen } from "./screens/Settings";
 import {
   GeneratingQuestScreen,
   QuestCompleteScreen,
@@ -15,6 +17,7 @@ import {
 } from "./screens/Quests";
 import { AreaProvider } from "./state/AreaContext";
 import { FeedProvider } from "./state/FeedContext";
+import { LocationProvider } from "./state/LocationContext";
 import { RambleProvider, useRamble } from "./state/RambleContext";
 import { screenKey, tabOf, type TabName } from "./state/screens";
 
@@ -23,7 +26,6 @@ const TABS: { id: TabName; label: string; icon: typeof IconCompass }[] = [
   { id: "quests", label: "Quests", icon: IconDice },
   { id: "journey", label: "Journey", icon: IconPath },
   { id: "passport", label: "Passport", icon: IconBook },
-  { id: "profile", label: "Profile", icon: IconPerson },
 ];
 
 export function App() {
@@ -31,7 +33,9 @@ export function App() {
     <FeedProvider>
       <AreaProvider>
         <RambleProvider>
-          <Shell />
+          <LocationProvider>
+            <Shell />
+          </LocationProvider>
         </RambleProvider>
       </AreaProvider>
     </FeedProvider>
@@ -39,9 +43,11 @@ export function App() {
 }
 
 function Shell() {
-  const { screen } = useRamble();
+  const { screen, session, user } = useRamble();
+  const signedIn = Boolean(session && user);
   return (
-    <div className="app-shell has-nav">
+    <div className={signedIn ? "app-shell has-nav has-account" : "app-shell has-nav"}>
+      {signedIn ? <AccountMenu /> : null}
       <div key={screenKey(screen)} className="screen">
         <Routes />
       </div>
@@ -84,6 +90,10 @@ function Routes() {
       return <PassportScreen highlight={screen.highlight} />;
     case "profile":
       return <ProfileScreen />;
+    case "settings":
+      return <SettingsScreen />;
+    case "info":
+      return <InfoScreen />;
     case "interests":
       return <InterestsScreen />;
     default:

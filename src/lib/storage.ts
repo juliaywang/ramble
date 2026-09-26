@@ -12,7 +12,7 @@ export function loadPersisted(): Persisted {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { user: null, session: false };
     const parsed = JSON.parse(raw) as Partial<Persisted>;
-    const user = parsed.user ?? null;
+    const user = parsed.user ? { ...parsed.user, photo: parsed.user.photo ?? null, bio: parsed.user.bio ?? "" } : null;
     return { user, session: Boolean(parsed.session && user) };
   } catch {
     return { user: null, session: false };

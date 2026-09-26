@@ -185,6 +185,20 @@ export function walkMinutes(miles: number) {
   return Math.max(3, Math.round(miles * 20));
 }
 
+/** Places close enough to walk from `origin`, widening the radius if the block is sparse. */
+export function withinWalk<T extends LatLng>(places: T[], origin: LatLng): T[] {
+  const within = (miles: number) => places.filter((place) => distanceMiles(origin, place) <= miles);
+  for (const miles of [1.25, 2.5, 5]) {
+    const found = within(miles);
+    if (found.length >= 4) return found;
+  }
+  return places;
+}
+
+export function inCity(lat: number, lng: number) {
+  return lat > BOUNDS.south && lat < BOUNDS.north && lng > BOUNDS.west && lng < BOUNDS.east;
+}
+
 export function formatDistance(miles: number) {
   if (miles < 0.1) {
     const feet = Math.max(80, Math.round((miles * 5280) / 20) * 20);
