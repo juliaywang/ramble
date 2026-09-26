@@ -1045,3 +1045,29 @@ h2 { font-size: 20px; line-height: 1.3; }
 .street-map-frame .map-callout { bottom: 30px; }
 .street-map .leaflet-control-attribution { font-size: 9px; background: #fffffff0; padding: 2px 8px; }
 .map-load-error { position: absolute; top: 58px; left: 12px; right: 12px; background: white; padding: 10px 12px; border-radius: 12px; font-size: 12px; }
+
+/* Keep primary navigation outside the scrolling screen on every route. */
+.app-shell > .tabbar { display: grid; position: absolute; bottom: 0; z-index: 1000; }
+.has-nav .welcome, .has-nav .welcome-main {
+  min-height: calc(var(--phone-height) - var(--nav-h) - 8px);
+}
+
+.place-card-hit { height: auto; }
+.place-card-actions { padding: 0 18px 18px; }
+.open-maps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.open-maps:hover { background: var(--leaf); }
+.open-maps svg { flex-shrink: 0; }

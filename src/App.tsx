@@ -36,14 +36,13 @@ export function App() {
 }
 
 function Shell() {
-  const { screen, session, user } = useRamble();
-  const showNav = Boolean(session && user && tabOf(screen));
+  const { screen } = useRamble();
   return (
-    <div className={showNav ? "app-shell has-nav" : "app-shell"}>
+    <div className="app-shell has-nav">
       <div key={screenKey(screen)} className="screen">
         <Routes />
       </div>
-      {showNav ? <TabBar /> : null}
+      <TabBar />
     </div>
   );
 }
@@ -90,8 +89,8 @@ function Routes() {
 }
 
 function TabBar() {
-  const { screen, tab } = useRamble();
-  const current = tabOf(screen);
+  const { screen, tab, session, user, go } = useRamble();
+  const current = session && user ? tabOf(screen) : null;
   return (
     <nav className="tabbar" aria-label="Primary">
       {TABS.map((item) => {
@@ -103,7 +102,10 @@ function TabBar() {
             type="button"
             className="tab"
             aria-current={on ? "page" : undefined}
-            onClick={() => tab({ name: item.id })}
+            onClick={() => {
+              if (session && user) tab({ name: item.id });
+              else if (screen.name !== "signup" && screen.name !== "interests") go({ name: "signup" });
+            }}
           >
             <span className="tab-icon">
               <Icon />

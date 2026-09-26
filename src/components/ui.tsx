@@ -76,6 +76,19 @@ export function PlaceCard({
           </div>
         </div>
       </button>
+      <div className="place-card-actions">
+        <a
+          className="open-maps"
+          href={`https://maps.apple.com/?${new URLSearchParams({ ll: `${place.lat},${place.lng}`, q: place.name })}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Open ${place.name} in Maps`}
+        >
+          <DesignIcon name="map" size="sm" />
+          Open in Maps
+          <DesignIcon name="arrow" size="sm" />
+        </a>
+      </div>
     </article>
   );
 }
