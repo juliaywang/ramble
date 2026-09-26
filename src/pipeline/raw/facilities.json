@@ -1,0 +1,62 @@
+[
+  {
+    "facname": "GEORGE BRUCE LIBRARY",
+    "address": "518 WEST 125 STREET",
+    "factype": "PUBLIC LIBRARY",
+    "facgroup": "LIBRARIES",
+    "facsubgrp": "PUBLIC LIBRARIES",
+    "opname": "New York Public Library",
+    "latitude": "40.8137809586",
+    "longitude": "-73.957055147"
+  },
+  {
+    "facname": "GRANT",
+    "address": "1301 AMSTERDAM AVENUE",
+    "factype": "NYCHA COMMUNITY CENTER - COMMUNITY CENTER - CORNERSTONE",
+    "facgroup": "HUMAN SERVICES",
+    "facsubgrp": "COMMUNITY CENTERS AND COMMUNITY PROGRAMS",
+    "opname": "NYC Housing Authority",
+    "latitude": "40.8119129",
+    "longitude": "-73.9563758282"
+  },
+  {
+    "facname": "MORNINGSIDE HEIGHTS LIBRARY",
+    "address": "2900 BROADWAY",
+    "factype": "PUBLIC LIBRARY",
+    "facgroup": "LIBRARIES",
+    "facsubgrp": "PUBLIC LIBRARIES",
+    "opname": "New York Public Library",
+    "latitude": "40.8061335178",
+    "longitude": "-73.9646714553"
+  },
+  {
+    "facname": "NICHOLAS ROERICH MUSEUM, INC.",
+    "address": "319 WEST 107 STREET",
+    "factype": "MUSEUM",
+    "facgroup": "CULTURAL INSTITUTIONS",
+    "facsubgrp": "MUSEUMS",
+    "opname": "Nicholas Roerich Museum, Inc.",
+    "latitude": "40.8029341996",
+    "longitude": "-73.9690100838"
+  },
+  {
+    "facname": "COLUMBIA UNIVERSITY BUTLER LIBRARY",
+    "address": "535 WEST 114 STREET",
+    "factype": "ACADEMIC LIBRARIES",
+    "facgroup": "LIBRARIES",
+    "facsubgrp": "ACADEMIC AND SPECIAL LIBRARIES",
+    "opname": "Columbia University Butler Library",
+    "latitude": "40.8063776142",
+    "longitude": "-73.9631904899"
+  },
+  {
+    "facname": "GRANT",
+    "address": "3170 BROADWAY",
+    "factype": "NYCHA COMMUNITY CENTER - TA USE",
+    "facgroup": "OTHER PROPERTY",
+    "facsubgrp": "MISCELLANEOUS USE",
+    "opname": "NYC Housing Authority",
+    "latitude": "40.8145705091",
+    "longitude": "-73.958327069"
+  }
+]
