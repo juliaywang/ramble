@@ -6,6 +6,7 @@ import { boroughName } from "../pipeline/geo";
 import { INTERESTS, NEIGHBORHOOD } from "../pipeline/types";
 import { BackRow } from "../components/ui";
 import { useFeed } from "../state/FeedContext";
+import { useFriends } from "../state/FriendsContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
 
 export function ProfileScreen() {
@@ -34,6 +35,7 @@ export function ProfileScreen() {
     heading?.focus({ preventScroll: true });
     heading?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   }
+  const { friends, incomingRequests } = useFriends();
   const initial = firstName(name || user.name).slice(0, 1).toUpperCase();
 
   async function onPhoto(file: File | undefined) {
@@ -141,6 +143,11 @@ export function ProfileScreen() {
         <button type="button" className="stat stat-link" onClick={() => jumpTo("profile-saved")} aria-controls="profile-saved">
           <b>{saved.length}</b>
           <span>Saved places</span>
+        </button>
+        <button type="button" className="stat stat-link" onClick={() => go({ name: "friends" })}>
+          <b>{friends.length}</b>
+          <span>Friends</span>
+          <small>{incomingRequests.length > 0 ? `${incomingRequests.length} pending request${incomingRequests.length > 1 ? "s" : ""}` : "Community"}</small>
         </button>
       </div>
 

@@ -15,6 +15,7 @@ type State = {
 };
 
 type Action =
+  | { type: "login"; user: UserAccount }
   | { type: "go"; screen: Screen }
   | { type: "replace"; screen: Screen }
   | { type: "tab"; screen: Screen }
@@ -44,6 +45,8 @@ function init(): State {
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case "login":
+      return { ...state, user: action.user, session: true, pending: null, stack: [], screen: { name: "explore" } };
     case "go":
       return { ...state, stack: [...state.stack, state.screen], screen: action.screen };
     case "replace":
@@ -59,10 +62,12 @@ function reducer(state: State, action: Action): State {
       return { ...state, pending: action.pending, stack: [...state.stack, state.screen], screen: { name: "interests", mode: "onboarding" } };
     case "signup": {
       if (action.interests.length < 3) return state;
+      const username = usernameFromName(action.name);
       const user: UserAccount = {
+        id: `usr_${username}_${Date.now().toString(36)}`,
         name: action.name.trim(),
         email: action.email.trim().toLowerCase(),
-        username: usernameFromName(action.name),
+        username,
         photo: null,
         bio: "",
         interests: action.interests,
@@ -176,6 +181,7 @@ type Api = {
   replace: (screen: Screen) => void;
   tab: (screen: Screen) => void;
   back: () => void;
+  loginLocal: (user: UserAccount) => void;
   beginSignup: (pending: Pending) => void;
   finishSignup: (interests: InterestId[]) => void;
   saveInterests: (interests: InterestId[]) => void;
@@ -208,6 +214,7 @@ export function RambleProvider({ children }: { children: ReactNode }) {
       replace: (screen) => dispatch({ type: "replace", screen }),
       tab: (screen) => dispatch({ type: "tab", screen }),
       back: () => dispatch({ type: "back" }),
+      loginLocal: (user) => dispatch({ type: "login", user }),
       beginSignup: (pending) => dispatch({ type: "pending", pending }),
       finishSignup: (interests) =>
         dispatch({

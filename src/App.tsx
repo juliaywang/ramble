@@ -1,7 +1,9 @@
 import { AccountMenu } from "./components/AccountMenu";
-import { IconBook, IconCompass, IconDice, IconPath } from "./components/Icons";
+import { IconBook, IconCompass, IconDice, IconPath, IconPerson } from "./components/Icons";
 import { CommunityScreen, PlaceScreen } from "./screens/Details";
 import { ExploreScreen } from "./screens/Explore";
+import { FriendProfileScreen } from "./screens/FriendProfile";
+import { FriendsScreen } from "./screens/Friends";
 import { GeneratingJourneyScreen, JourneyScreen } from "./screens/Journey";
 import { InterestsScreen, SignupScreen, WelcomeScreen } from "./screens/Onboarding";
 import { PassportScreen } from "./screens/Passport";
@@ -17,6 +19,7 @@ import {
 } from "./screens/Quests";
 import { AreaProvider } from "./state/AreaContext";
 import { FeedProvider } from "./state/FeedContext";
+import { FriendsProvider, useFriends } from "./state/FriendsContext";
 import { LocationProvider } from "./state/LocationContext";
 import { RambleProvider, useRamble } from "./state/RambleContext";
 import { screenKey, tabOf, type TabName } from "./state/screens";
@@ -26,6 +29,7 @@ const TABS: { id: TabName; label: string; icon: typeof IconCompass }[] = [
   { id: "quests", label: "Quests", icon: IconDice },
   { id: "journey", label: "Journey", icon: IconPath },
   { id: "passport", label: "Passport", icon: IconBook },
+  { id: "friends", label: "Friends", icon: IconPerson },
 ];
 
 export function App() {
@@ -33,9 +37,11 @@ export function App() {
     <FeedProvider>
       <AreaProvider>
         <RambleProvider>
-          <LocationProvider>
-            <Shell />
-          </LocationProvider>
+          <FriendsProvider>
+            <LocationProvider>
+              <Shell />
+            </LocationProvider>
+          </FriendsProvider>
         </RambleProvider>
       </AreaProvider>
     </FeedProvider>
@@ -88,6 +94,10 @@ function Routes() {
       return <GeneratingJourneyScreen />;
     case "passport":
       return <PassportScreen highlight={screen.highlight} />;
+    case "friends":
+      return <FriendsScreen initialView={screen.view} />;
+    case "friend-profile":
+      return <FriendProfileScreen friendId={screen.friendId} />;
     case "profile":
       return <ProfileScreen />;
     case "settings":
@@ -103,12 +113,14 @@ function Routes() {
 
 function TabBar() {
   const { screen, tab, session, user, go } = useRamble();
+  const { incomingRequests } = useFriends();
   const current = session && user ? tabOf(screen) : null;
   return (
     <nav className="tabbar" aria-label="Primary">
       {TABS.map((item) => {
         const Icon = item.icon;
         const on = current === item.id;
+        const hasBadge = item.id === "friends" && incomingRequests.length > 0;
         return (
           <button
             key={item.id}
@@ -122,6 +134,7 @@ function TabBar() {
           >
             <span className="tab-icon">
               <Icon />
+              {hasBadge ? <span className="tab-badge" aria-label={`${incomingRequests.length} requests`} /> : null}
             </span>
             {item.label}
           </button>

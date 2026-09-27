@@ -39,6 +39,25 @@ NYC Open Data (live, with a saved citywide fallback) + Live Discovery fixtures
 
 `fetchNeighborhoodFeed()` is the seam. `src/pipeline/agent.ts` stays the personalization layer.
 
+## Friends & Community (Supabase)
+
+Ramble includes a **Friends** feature to connect with fellow NYC explorers, share discoveries, compare passport progress, and ramble together.
+
+### Demo mode & Supabase connection
+
+- **Runs immediately in Local Demo Mode**: If you haven't created your Supabase database yet, the Friends feature works in local demo mode with pre-populated NYC explorers (e.g. `@mayawalks`, `@marcus_nyc`, `@elenarambles`). You can search, send/accept requests, view profiles, and test the full experience right away.
+- **Connecting your Supabase database**:
+  1. Create a free project at [supabase.com](https://supabase.com).
+  2. Open the **SQL Editor** in Supabase and run [`supabase/schema.sql`](supabase/schema.sql) (or [`supabase_setup.sql`](supabase_setup.sql)). This creates the `profiles` and `friendships` tables, indexes, and RLS policies.
+  3. Copy your **Project URL** and **anon public key** from Supabase (Project Settings → API).
+  4. Either:
+     - Add them to `.env`:
+       ```env
+       VITE_SUPABASE_URL=https://your-project.supabase.co
+       VITE_SUPABASE_ANON_KEY=your-anon-key
+       ```
+     - **Or** enter them directly inside Ramble under **Settings → Supabase Database** (or tap the database banner on the Friends screen).
+
 ## Scripts
 
 ```bash
@@ -47,3 +66,10 @@ npm run dev
 npm test
 npm run build
 ```
+
+
+### Local demo accounts
+
+With `npm run dev`, friends use browser storage instead of Supabase. Choose **Sign in / Create account**, create an account with any email-shaped address and a password of at least six characters, and select your interests. Later, choose **Sign in** with the same email and password to restore its profile, friends, requests, saved places, quests, passport, and journey. Each account retains its own identity and progress. To try requests between two accounts, create both in the same browser, send a request from one, then sign in as the other to accept it.
+
+These are local demo accounts, not server authentication. They stay in this browser at the same origin (including the localhost port); clearing site data removes them, and they do not sync across devices. Passwords are stored as salted PBKDF2 hashes. Older accounts without a password keep their existing identity and set a password on their first local sign-in.

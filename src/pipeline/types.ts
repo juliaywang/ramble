@@ -134,6 +134,7 @@ export type JourneyPlan = {
 };
 
 export type UserAccount = {
+  id?: string;
   name: string;
   email: string;
   username: string;
@@ -146,6 +147,37 @@ export type UserAccount = {
   journey: JourneyPlan | null;
   createdAt: string;
 };
+
+export type FriendProfile = {
+  id: string;
+  username: string;
+  name: string;
+  bio: string;
+  photo: string | null;
+  interests: InterestId[];
+  discoveredIds: string[];
+  questsCount: number;
+  passportPercent: number;
+  createdAt?: string;
+};
+
+export type FriendshipStatus = "pending" | "accepted" | "declined";
+
+export type FriendRequest = {
+  id: string;
+  userId: string;
+  friendId: string;
+  status: FriendshipStatus;
+  createdAt: string;
+  profile: FriendProfile;
+};
+
+export type FriendItem = {
+  friendshipId: string;
+  profile: FriendProfile;
+  since: string;
+};
+
 
 export type RankedDiscovery = Discovery & {
   match: number;

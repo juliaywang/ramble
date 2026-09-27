@@ -1,3 +1,4 @@
+import { authenticateLocal } from "../lib/storage";
 import { Brand } from "../components/Brand";
 import { DesignIcon } from "../components/DesignIcon";
 import { useState, type FormEvent } from "react";
@@ -17,8 +18,8 @@ export function WelcomeScreen() {
           <p className="lede">Ramble turns New York from a map of places into a map of communities, stories, and unexpected adventures.</p>
           <div className="welcome-actions">
             {user ? <button type="button" className="btn btn-primary" onClick={continueSession}>Continue as {firstName(user.name)} <DesignIcon name="arrow" /></button> : null}
-            <button type="button" className={user ? "btn btn-ghost" : "btn btn-primary"} onClick={() => go({ name: "signup" })}>Create your account <DesignIcon name="arrow" /></button>
-            <p className="fine">{user ? "A new account replaces the one saved on this device." : "Free to explore. No credit card needed."}</p>
+            <button type="button" className={user ? "btn btn-ghost" : "btn btn-primary"} onClick={() => go({ name: "signup" })}>Sign in / Create account <DesignIcon name="arrow" /></button>
+            <p className="fine">{user ? "Accounts and progress are saved separately in this browser." : "Free to explore. No credit card needed."}</p>
           </div>
         </div>
         <p className="fine">Built for curious New Yorkers.</p>
@@ -40,16 +41,18 @@ export function WelcomeScreen() {
 }
 
 export function SignupScreen() {
-  const { back, beginSignup, pending } = useRamble();
+  const { back, beginSignup, pending, loginLocal } = useRamble();
+  const [mode, setMode] = useState<"login" | "create">("login");
+  const [busy, setBusy] = useState(false);
   const [name, setName] = useState(pending?.name ?? "");
   const [email, setEmail] = useState(pending?.email ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const trimmed = name.trim();
-    if (trimmed.length < 2) {
+    if (mode === "create" && trimmed.length < 2) {
       setError("Add the name you want on the passport.");
       return;
     }
@@ -58,11 +61,18 @@ export function SignupScreen() {
       return;
     }
     if (password.length < 6) {
-      setError("Use at least 6 characters. It stays on this device, then we discard it.");
+      setError("Use at least 6 characters.");
       return;
     }
     setError(null);
-    beginSignup({ name: trimmed, email: email.trim() });
+    setBusy(true);
+    try {
+      const existing = await authenticateLocal(email, password, mode === "create");
+      if (existing) loginLocal(existing);
+      else beginSignup({ name: trimmed, email: email.trim() });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not access local account storage.");
+    } finally { setBusy(false); }
   }
 
   return (
@@ -71,15 +81,19 @@ export function SignupScreen() {
         Back
       </button>
       <p className="eyebrow">Account</p>
-      <h1>Make a passport.</h1>
+      <h1>{mode === "login" ? "Welcome back." : "Make a passport."}</h1>
       <p className="lede">
-        Your name, interests, and finished quests stay in this browser. The password is checked here and not stored.
+        Use any email for this local demo. Sign in again to restore your friends, saved places, and progress in this browser.
       </p>
+      <div className="chips">
+        <button type="button" className="chip" aria-pressed={mode === "login"} disabled={busy} onClick={() => { setMode("login"); setError(null); }}>Sign in</button>
+        <button type="button" className="chip" aria-pressed={mode === "create"} disabled={busy} onClick={() => { setMode("create"); setError(null); }}>Create account</button>
+      </div>
       <form className="stack" onSubmit={submit}>
-        <label className="field">
+        {mode === "create" && <label className="field">
           What should we call you?
           <input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" placeholder="Alex" />
-        </label>
+        </label>}
         <label className="field">
           Email
           <input
@@ -97,13 +111,13 @@ export function SignupScreen() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            autoComplete="new-password"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
             placeholder="At least 6 characters"
           />
         </label>
         {error ? <p className="form-error">{error}</p> : null}
-        <button type="submit" className="btn btn-primary btn-block">
-          Choose interests
+        <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
+          {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Choose interests"}
         </button>
       </form>
     </section>

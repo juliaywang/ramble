@@ -1,6 +1,6 @@
 import type { JourneyDuration, PassportCategoryId, QuestDraft } from "../pipeline/types";
 
-export type TabName = "explore" | "quests" | "journey" | "passport";
+export type TabName = "explore" | "quests" | "journey" | "passport" | "friends";
 
 export type Screen =
   | { name: "welcome" }
@@ -18,6 +18,8 @@ export type Screen =
   | { name: "journey" }
   | { name: "generating-journey"; duration: JourneyDuration; avoid?: string }
   | { name: "passport"; highlight?: PassportCategoryId }
+  | { name: "friends"; view?: "friends" | "requests" | "find" }
+  | { name: "friend-profile"; friendId: string }
   | { name: "profile" }
   | { name: "settings" }
   | { name: "info" };
@@ -27,7 +29,8 @@ export function isTab(screen: Screen): screen is { name: TabName } {
     screen.name === "explore" ||
     screen.name === "quests" ||
     screen.name === "journey" ||
-    screen.name === "passport"
+    screen.name === "passport" ||
+    screen.name === "friends"
   );
 }
 
@@ -45,6 +48,7 @@ export function tabOf(screen: Screen): TabName | null {
   }
   if (screen.name === "journey" || screen.name === "generating-journey") return "journey";
   if (screen.name === "passport") return "passport";
+  if (screen.name === "friends" || screen.name === "friend-profile") return "friends";
   return null;
 }
 
@@ -54,6 +58,10 @@ export function screenKey(screen: Screen) {
     case "community":
     case "quest":
       return `${screen.name}:${screen.id}`;
+    case "friend-profile":
+      return `friend:${screen.friendId}`;
+    case "friends":
+      return `friends:${screen.view ?? "all"}`;
     case "quest-complete":
       return `done:${screen.questId}`;
     case "quest-offer":
