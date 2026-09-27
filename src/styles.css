@@ -170,6 +170,49 @@ h3 { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
 }
 .field input { height: 52px; padding: 0 14px; }
 .field textarea { resize: vertical; line-height: 1.4; }
+.username-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.username-prefix {
+  position: absolute;
+  left: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--muted);
+  pointer-events: none;
+  user-select: none;
+}
+.username-input-wrap input {
+  width: 100%;
+  padding-left: 32px;
+}
+.field-hint {
+  font-size: 12px;
+  font-weight: 550;
+  margin: 2px 0 0;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.field-hint svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.field-hint.is-available {
+  color: var(--moss-deep);
+}
+.field-hint.is-taken,
+.field-hint.is-invalid {
+  color: var(--clay-deep);
+}
+.field-hint.is-checking {
+  color: var(--muted);
+}
 .form-error { color: var(--clay-deep); font-weight: 600; }
 .interest-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
 .interest {
@@ -1065,14 +1108,36 @@ h2 { font-size: 20px; line-height: 1.3; }
   position: absolute;
   right: 12px;
   bottom: 18px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ink);
-  color: white;
-  font-weight: 700;
-  font-size: 13px;
-  min-height: 36px;
-  padding: 0 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(40, 30, 20, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(19, 41, 61, 0.16);
+  color: #007aff;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.map-locate.is-inactive {
+  color: var(--muted);
+}
+.map-locate:hover {
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(19, 41, 61, 0.22);
+  transform: scale(1.05);
+}
+.map-locate:active {
+  transform: scale(0.94);
+  background: #f0f4f8;
+}
+.map-locate svg {
+  width: 18px;
+  height: 18px;
 }
 .account-menu { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 14px; z-index: 1200; }
 .account-trigger {

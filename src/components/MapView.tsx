@@ -168,13 +168,15 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen, onAcc
         <div className="map-legend"><span><i className="legend-you" /> {you ? you.label : "Waiting for your location"}</span><span>Colors by activity</span></div>
         <button
           type="button"
-          className="map-locate"
+          className={`map-locate ${you ? "is-active" : "is-inactive"}`}
+          aria-label={you ? "Center on my location" : "Use my location"}
+          title={you ? "Center on my location" : "Use my location"}
           onClick={() => {
             if (you) map?.flyTo([you.lat, you.lng], Math.max(map.getZoom(), 15), { duration: 0.5 });
             else onLocate?.();
           }}
         >
-          {you ? "Center on me" : "Use my location"}
+          <DesignIcon name="locate" size="md" />
         </button>
         {tileError && <p className="map-load-error" role="status">Street map couldn’t load. Check your connection.</p>}
       </div>

@@ -9,7 +9,7 @@ import { usernameFromName } from "../lib/format";
 import { STARTER_DISCOVERED_IDS, type InterestId, type JourneyPlan, type QuestDraft, type UserAccount } from "../pipeline/types";
 import { type Screen } from "./screens";
 
-type Pending = { name: string; email: string };
+type Pending = { name: string; email: string; username?: string };
 
 type State = {
   user: UserAccount | null;
@@ -26,7 +26,7 @@ type Action =
   | { type: "tab"; screen: Screen }
   | { type: "back" }
   | { type: "pending"; pending: Pending }
-  | { type: "signup"; name: string; email: string; interests: InterestId[] }
+  | { type: "signup"; name: string; email: string; username?: string; interests: InterestId[] }
   | { type: "interests"; interests: InterestId[] }
   | { type: "continue" }
   | { type: "logout" }
@@ -67,7 +67,7 @@ function reducer(state: State, action: Action): State {
       return { ...state, pending: action.pending, stack: [...state.stack, state.screen], screen: { name: "interests", mode: "onboarding" } };
     case "signup": {
       if (action.interests.length < 3) return state;
-      const username = usernameFromName(action.name);
+      const username = action.username?.trim().toLowerCase() || usernameFromName(action.name);
       const user: UserAccount = {
         id: `usr_${username}_${Date.now().toString(36)}`,
         name: action.name.trim(),
@@ -272,6 +272,7 @@ export function RambleProvider({ children }: { children: ReactNode }) {
           type: "signup",
           name: state.pending?.name ?? "Explorer",
           email: state.pending?.email ?? "",
+          username: state.pending?.username,
           interests,
         }),
       saveInterests: (interests) => dispatch({ type: "interests", interests }),

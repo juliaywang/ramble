@@ -33,11 +33,13 @@ export function isTableMissingError(error: unknown): boolean {
 }
 
 export function newCloudAccount(auth: User): UserAccount {
+  const metadataUsername =
+    typeof auth.user_metadata?.username === "string" ? auth.user_metadata.username.trim().toLowerCase() : "";
   return {
     id: auth.id,
     email: auth.email ?? "",
     name: (auth.user_metadata?.name as string | undefined) || "Explorer",
-    username: `r_${auth.id.replaceAll("-", "").slice(0, 14)}`,
+    username: metadataUsername || `r_${auth.id.replaceAll("-", "").slice(0, 14)}`,
     bio: "",
     photo: null,
     interests: [],
@@ -120,6 +122,9 @@ export async function loadCloudAccount(auth: User): Promise<UserAccount> {
 
   const username =
     existingProfile?.username ||
+    (typeof auth.user_metadata?.username === "string" && auth.user_metadata.username.trim()
+      ? auth.user_metadata.username.trim().toLowerCase()
+      : "") ||
     (local?.username && !local.username.startsWith("usr_") ? local.username : base.username);
 
   const bio = existingProfile?.bio ?? local?.bio ?? base.bio;

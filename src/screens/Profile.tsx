@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { getUserId, isUsernameTaken } from "../lib/friendsService";
 import { firstName, formatWhen, greeting, normalizeUsername, usernameFromName } from "../lib/format";
 import { readProfilePhoto } from "../lib/photo";
 import { passportPercent, passportRows, totalXp } from "../pipeline/agent";
@@ -49,7 +50,7 @@ export function ProfileScreen() {
     }
   }
 
-  function save(event: FormEvent) {
+  async function save(event: FormEvent) {
     event.preventDefault();
     if (name.trim().length < 2) {
       setError("Use at least two characters for your name.");
@@ -63,6 +64,15 @@ export function ProfileScreen() {
     if (!/^[a-z0-9_]{3,16}$/.test(handle)) {
       setError("Usernames are 3–16 letters, numbers, or underscores.");
       return;
+    }
+    const currentHandle = normalizeUsername(user.username || "");
+    if (handle !== currentHandle) {
+      const currentId = user.id || getUserId(user);
+      const taken = await isUsernameTaken(handle, currentId);
+      if (taken) {
+        setError(`@${handle} is already taken. Please choose another username.`);
+        return;
+      }
     }
     setError(null);
     saveAccount({ name, email, username: handle, bio, photo });

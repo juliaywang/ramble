@@ -31,6 +31,7 @@ import {
   searchProfiles,
   sendFriendRequest,
   syncUserProfile,
+  isUsernameTaken,
 } from "./friendsService";
 import { clearCustomSupabaseConfig, getSupabaseConfig, saveCustomSupabaseConfig } from "./supabase";
 import type { UserAccount } from "../pipeline/types";
@@ -179,6 +180,24 @@ describe("friendsService", () => {
 
     const friendsAfter = await getFriends("usr_alice");
     expect(friendsAfter.some((f) => f.profile.id === "usr_elenarambles")).toBe(false);
+  });
+
+  it("checks username availability accurately", async () => {
+    // Should detect taken usernames from default mock profiles
+    expect(await isUsernameTaken("mayawalks")).toBe(true);
+    expect(await isUsernameTaken("MayaWalks")).toBe(true);
+    expect(await isUsernameTaken("@mayawalks")).toBe(true);
+    expect(await isUsernameTaken("marcus_nyc")).toBe(true);
+
+    // Should detect taken username from synced active user
+    expect(await isUsernameTaken("alicewalks")).toBe(true);
+
+    // Excluding self should allow user to keep their username
+    expect(await isUsernameTaken("alicewalks", "usr_alice")).toBe(false);
+
+    // Should report unused username as available
+    expect(await isUsernameTaken("totally_unique_walker")).toBe(false);
+    expect(await isUsernameTaken("")).toBe(false);
   });
 });
 

@@ -16,6 +16,7 @@ export type IconName =
   | "heart"
   | "home"
   | "leaf"
+  | "locate"
   | "map"
   | "music"
   | "palette"
@@ -43,6 +44,7 @@ const iconPaths: Record<IconName, ReactNode> = {
   heart: <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />,
   home: <><path d="m3 11 9-8 9 8" /><path d="M5 10v11h14V10M9 21v-6h6v6" /></>,
   leaf: <><path d="M20 4c-8 0-14 3-14 9a5 5 0 0 0 5 5c6 0 9-6 9-14Z" /><path d="M4 21c2-5 6-9 12-12" /></>,
+  locate: <polygon points="3 11 22 2 13 21 11 13 3 11" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />,
   map: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z" /><path d="M9 3v15M15 6v15" /></>,
   music: <><path d="M9 18V5l10-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" /></>,
   palette: <>

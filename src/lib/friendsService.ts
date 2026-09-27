@@ -456,6 +456,81 @@ export async function searchProfiles(query: string, currentUserId: string): Prom
   );
 }
 
+export async function isUsernameTaken(rawUsername: string, excludeUserId?: string): Promise<boolean> {
+  const clean = rawUsername.trim().toLowerCase().replace(/^@/, "");
+  if (!clean) return false;
+
+  const client = getSupabaseClient();
+  if (client) {
+    try {
+      let query = client
+        .from("profiles")
+        .select("id")
+        .ilike("username", clean)
+        .limit(1);
+
+      if (excludeUserId) {
+        query = query.neq("id", excludeUserId);
+      }
+
+      const { data, error } = await query;
+      if (!error && Array.isArray(data)) {
+        return data.length > 0;
+      }
+      if (error) {
+        console.warn("Supabase username check error:", error.message);
+      }
+    } catch (err) {
+      console.warn("Failed to check username availability on Supabase:", err);
+    }
+    // When Supabase is configured, it is the sole authority for explorer accounts.
+    // Do not check local prototype mock accounts which can cause false positives.
+    return false;
+  }
+
+  // Check mock store
+  try {
+    const store = getMockStore();
+    const match = store.profiles.find((p) => p.username.toLowerCase() === clean);
+    if (match && (!excludeUserId || match.id !== excludeUserId)) {
+      return true;
+    }
+  } catch {
+    // Ignore storage read error
+  }
+
+  // Check local demo accounts
+  try {
+    if (typeof localStorage !== "undefined") {
+      const rawAccounts = localStorage.getItem("ramble.accounts.v1");
+      if (rawAccounts) {
+        const accounts = JSON.parse(rawAccounts) as Record<string, UserAccount>;
+        const match = Object.values(accounts).find(
+          (acc) => acc?.username && acc.username.toLowerCase() === clean,
+        );
+        if (match && (!excludeUserId || (match.id && match.id !== excludeUserId))) {
+          return true;
+        }
+      }
+      const rawState = localStorage.getItem("ramble.state.v1");
+      if (rawState) {
+        const state = JSON.parse(rawState) as { user?: UserAccount };
+        if (
+          state?.user?.username &&
+          state.user.username.toLowerCase() === clean &&
+          (!excludeUserId || (state.user.id && state.user.id !== excludeUserId))
+        ) {
+          return true;
+        }
+      }
+    }
+  } catch {
+    // Ignore storage read error
+  }
+
+  return false;
+}
+
 export async function getRecommendedProfiles(currentUser: UserAccount): Promise<FriendProfile[]> {
   const currentUserId = getUserId(currentUser);
   const client = getSupabaseClient();
