@@ -1,6 +1,6 @@
 # Ramble
 
-Ramble is a mobile-first prototype for exploring New York as a map of communities — starting in Morningside Heights, around Columbia University.
+Ramble is a mobile-first prototype for exploring New York City as a map of communities — Manhattan first, then Brooklyn, Queens, the Bronx, and Staten Island.
 
 > Turn the city from a map of places into a map of communities.
 
@@ -8,8 +8,8 @@ Ramble is a mobile-first prototype for exploring New York as a map of communitie
 
 Create an account, pick at least three interests, then:
 
-1. Open the Explore map and a discovery.
-2. Tap **Give me a side quest**, accept it, and complete it.
+1. On Explore, switch boroughs. The map and the list follow the borough you pick. All NYC shows the five together.
+2. Open a discovery, tap **Give me a side quest**, accept it, and complete it. Quests and journeys start at your current location. Allow location when the browser asks. Open in Maps is on the place and on the quest. Edit profile is under the picture at the top right, and on Explore.
 3. Find it under **Quests → Completed**. The passport percentage moves when the quest stamps a new kind of place.
 4. Open **Journey** and tap **Build my journey**.
 
@@ -17,12 +17,11 @@ The account, quests, saved places, and passport live in this browser (`localStor
 
 ## What’s in the feed
 
-Verified places come from five NYC Open Data feeds, limited to Morningside Heights:
+Verified places come from NYC Open Data, across the city:
 
 - Farmers markets
 - Public art
 - GreenThumb community gardens
-- Individual landmarks
 - Libraries, museums, and community centers
 
 The app starts from a saved copy of those rows, then refreshes each dataset in the browser. If one request fails, that dataset stays on the saved copy. Cafés, the game café, concerts, parks, and the food pantry stay in the app as **Live Discovery** until a search client exists.
@@ -32,9 +31,9 @@ A new passport opens at **50%** (Bookstore, Café, Farmers Market). Completing a
 ## Pipeline
 
 ```
-NYC Open Data (live, with a saved fallback) + Live Discovery fixtures
-  → normalize into Discovery / Community records
-  → agent (match, why, side quest, journey)
+NYC Open Data (live, with a saved citywide fallback) + Live Discovery fixtures
+  → normalize into Discovery / Community records, tagged by borough
+  → agent (match, why, side quest, journey) from the borough’s starting point
   → map
 ```
 

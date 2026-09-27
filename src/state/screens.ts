@@ -1,6 +1,6 @@
 import type { JourneyDuration, PassportCategoryId, QuestDraft } from "../pipeline/types";
 
-export type TabName = "explore" | "quests" | "journey" | "passport" | "profile";
+export type TabName = "explore" | "quests" | "journey" | "passport";
 
 export type Screen =
   | { name: "welcome" }
@@ -18,15 +18,16 @@ export type Screen =
   | { name: "journey" }
   | { name: "generating-journey"; duration: JourneyDuration; avoid?: string }
   | { name: "passport"; highlight?: PassportCategoryId }
-  | { name: "profile" };
+  | { name: "profile" }
+  | { name: "settings" }
+  | { name: "info" };
 
 export function isTab(screen: Screen): screen is { name: TabName } {
   return (
     screen.name === "explore" ||
     screen.name === "quests" ||
     screen.name === "journey" ||
-    screen.name === "passport" ||
-    screen.name === "profile"
+    screen.name === "passport"
   );
 }
 
@@ -44,7 +45,6 @@ export function tabOf(screen: Screen): TabName | null {
   }
   if (screen.name === "journey" || screen.name === "generating-journey") return "journey";
   if (screen.name === "passport") return "passport";
-  if (screen.name === "profile" || (screen.name === "interests" && screen.mode === "edit")) return "profile";
   return null;
 }
 

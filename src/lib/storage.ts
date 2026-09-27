@@ -1,3 +1,4 @@
+import { normalizeUsername, usernameFromName } from "./format";
 import type { UserAccount } from "../pipeline/types";
 
 const KEY = "ramble.v1";
@@ -12,7 +13,14 @@ export function loadPersisted(): Persisted {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { user: null, session: false };
     const parsed = JSON.parse(raw) as Partial<Persisted>;
-    const user = parsed.user ?? null;
+    const user = parsed.user
+      ? {
+          ...parsed.user,
+          photo: parsed.user.photo ?? null,
+          bio: parsed.user.bio ?? "",
+          username: normalizeUsername(parsed.user.username || "") || usernameFromName(parsed.user.name ?? ""),
+        }
+      : null;
     return { user, session: Boolean(parsed.session && user) };
   } catch {
     return { user: null, session: false };

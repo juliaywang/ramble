@@ -3,22 +3,46 @@ import { useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
 import { PlaceCard, SourceBadge } from "../components/ui";
 import { greeting } from "../lib/format";
-import { rankCommunities, rankDiscoveries } from "../pipeline/agent";
-import { INTERESTS, NEIGHBORHOOD, type InterestId } from "../pipeline/types";
+import { matchScore, rankCommunities, rankDiscoveries } from "../pipeline/agent";
+import { placeInArea } from "../pipeline/geo";
+import { locationNote, useLocation } from "../state/LocationContext";
+import { INTERESTS, type InterestId } from "../pipeline/types";
+import { CITY_AREAS, useArea } from "../state/AreaContext";
 import { useFeed } from "../state/FeedContext";
 import { useRequiredUser, useRamble } from "../state/RambleContext";
+
+const PAGE = 18;
 
 export function ExploreScreen() {
   const user = useRequiredUser();
   const { go } = useRamble();
   const feed = useFeed();
+  const { area, setArea } = useArea();
+  const { origin, status, request } = useLocation();
   const [filter, setFilter] = useState<InterestId | "all">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const ranked = useMemo(() => rankDiscoveries(user, feed.places), [user, feed.places]);
+  const [shown, setShown] = useState(PAGE);
+  const inArea = useMemo(
+    () => feed.places.filter((place) => placeInArea(place.borough, area)),
+    [feed.places, area],
+  );
+  const ranked = useMemo(() => {
+    if (origin) return rankDiscoveries(user, inArea, origin);
+    return inArea
+      .map((place) => ({
+        ...place,
+        match: matchScore(user.interests, place.tags),
+        miles: 0,
+        minutes: 0,
+        why: place.summary,
+      }))
+      .sort((a, b) => b.match - a.match || a.name.localeCompare(b.name));
+  }, [user, inArea, origin]);
   const people = useMemo(() => rankCommunities(user, feed.communities).slice(0, 6), [user, feed.communities]);
   const visible = ranked.filter((place) => filter === "all" || place.tags.includes(filter));
-  const openCount = feed.places.filter((place) => place.source === "nyc-open-data").length;
-  const liveCount = feed.places.filter((place) => place.source === "live-discovery").length;
+  const page = visible.slice(0, shown);
+  const openCount = inArea.filter((place) => place.source === "nyc-open-data").length;
+  const liveCount = inArea.filter((place) => place.source === "live-discovery").length;
   const active = user.quests.find((quest) => quest.status === "active");
   const chips: { id: InterestId | "all"; label: string }[] = [
     { id: "all", label: "For you" },
@@ -32,7 +56,10 @@ export function ExploreScreen() {
     <section className="page explore-page">
       <header className="explore-head">
         <h1>{greeting(user.name)}</h1>
-        <p className="meta-line">{NEIGHBORHOOD.name}</p>
+        <button type="button" className="text-btn" onClick={() => go({ name: "profile" })}>
+          Edit profile
+        </button>
+        <p className="meta-line">{area.name}</p>
         <p className="lede">
           {openCount} from NYC Open Data · {liveCount} live discoveries
         </p>
@@ -48,6 +75,24 @@ export function ExploreScreen() {
         </button>
       ) : null}
 
+      <div className="chips discovery-filters" role="group" aria-label="Choose a borough">
+        {CITY_AREAS.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className="chip"
+            aria-pressed={area.id === option.id}
+            onClick={() => {
+              setArea(option.id);
+              setSelectedId(null);
+              setShown(PAGE);
+            }}
+          >
+            {option.short}
+          </button>
+        ))}
+      </div>
+
       <div className="chips discovery-filters" role="group" aria-label="Filter discoveries">
         {chips.map((chip) => (
           <button
@@ -58,6 +103,7 @@ export function ExploreScreen() {
             onClick={() => {
               setFilter(chip.id);
               setSelectedId(null);
+              setShown(PAGE);
             }}
           >
             {chip.label}
@@ -67,17 +113,29 @@ export function ExploreScreen() {
 
       <MapView
         places={visible}
+        area={area}
+        you={origin}
         selectedId={selectedId}
         onSelect={setSelectedId}
         onOpen={(id) => go({ name: "place", id })}
+        onLocate={() => void request()}
       />
       <p className="map-note">
         {feed.updatedFrom === "live"
-          ? "Live pull from NYC Open Data, plus discoveries saved in the app. Map centered on College Walk."
-          : "Saved copy of NYC Open Data, plus discoveries saved in the app. Map centered on College Walk."}
+          ? `Live pull from NYC Open Data across ${area.name}. ${locationNote(status)}`
+          : `Saved copy of NYC Open Data across ${area.name}. ${locationNote(status)}`}
       </p>
 
-      <button type="button" className="sidequest-banner" onClick={() => go({ name: "generating-quest", avoid: [] })}>
+      <button
+        type="button"
+        className="sidequest-banner"
+        onClick={() => {
+          void (async () => {
+            if (!origin && !(await request())) return;
+            go({ name: "generating-quest", avoid: [] });
+          })();
+        }}
+      >
         <span className="sidequest-mark" aria-hidden="true"><DesignIcon name="dice" size="lg" /></span>
         <span>
           <strong>Give me a side quest</strong>
@@ -90,19 +148,26 @@ export function ExploreScreen() {
       </div>
       <div className="stack discovery-grid">
         {visible.length === 0 ? (
-          <p className="empty">Nothing tagged with that interest in this slice of the neighborhood. Choose For you to see the full map.</p>
+          <p className="empty">Nothing tagged with that interest in {area.name}. Choose For you to see the full map.</p>
         ) : (
-          visible.map((place) => (
+          page.map((place) => (
             <PlaceCard
               key={place.id}
               place={place}
               logged={user.discoveredIds.includes(place.id)}
               selected={place.id === selectedId}
+              showBorough={area.id === "nyc"}
+              awaitingLocation={!origin}
               onOpen={() => go({ name: "place", id: place.id })}
             />
           ))
         )}
       </div>
+      {shown < visible.length ? (
+        <button type="button" className="btn btn-ghost btn-block" onClick={() => setShown((count) => count + PAGE)}>
+          Show more in {area.short} ({visible.length - shown} left)
+        </button>
+      ) : null}
 
       <div className="section-head">
         <h2>Find your people</h2>

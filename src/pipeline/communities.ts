@@ -70,7 +70,6 @@ export const COMMUNITIES: Community[] = [
       "The cathedral's community programs sit beside the stonework: meals, clothing, and volunteer roles that belong to the neighborhood, not only the nave.",
     about:
       "St. John's is a building and a set of rooms where people organize. If history brought you to the unfinished tower, the bulletin is how you stay. Ask what is open to non-parishioners before you promise a shift.",
-    discoveryId: "cathedral",
   },
   {
     id: "miller-audience",

@@ -1,5 +1,6 @@
-import { BackRow, PlaceMedia, SourceBadge } from "../components/ui";
-import { ANCHOR, distanceMiles, formatDistance, walkMinutes } from "../pipeline/geo";
+import { BackRow, OpenInMaps, PlaceMedia, SourceBadge } from "../components/ui";
+import { distanceMiles, formatDistance, walkMinutes } from "../pipeline/geo";
+import { useLocation } from "../state/LocationContext";
 import { categoryLabel, explainCommunity, explainPlace, matchScore } from "../pipeline/agent";
 import { communityById } from "../pipeline/index";
 import { CATEGORIES } from "../pipeline/types";
@@ -9,6 +10,7 @@ import { useRamble, useRequiredUser } from "../state/RambleContext";
 export function PlaceScreen({ id }: { id: string }) {
   const user = useRequiredUser();
   const { back, go, toggleSave } = useRamble();
+  const { origin, request } = useLocation();
   const place = usePlace(id);
   if (!place) {
     return (
@@ -18,8 +20,8 @@ export function PlaceScreen({ id }: { id: string }) {
       </section>
     );
   }
-  const miles = distanceMiles(ANCHOR, place);
-  const minutes = walkMinutes(miles);
+  const miles = origin ? distanceMiles(origin, place) : null;
+  const minutes = miles === null ? null : walkMinutes(miles);
   const match = matchScore(user.interests, place.tags);
   const saved = user.savedIds.includes(place.id);
   const meta = CATEGORIES[place.category];
@@ -43,7 +45,7 @@ export function PlaceScreen({ id }: { id: string }) {
           </button>
         </div>
         <p className="meta-line">
-          {formatDistance(miles)} · {minutes} min walk · {match}% match
+          {miles === null ? "Turn on location for walking distance" : `${formatDistance(miles)} · ${minutes} min walk`} · {match}% match
         </p>
         <div className="badge-row">
           <SourceBadge source={place.source} />
@@ -52,7 +54,7 @@ export function PlaceScreen({ id }: { id: string }) {
       </div>
       <section className="why-panel">
         <h2>Why Ramble recommended it</h2>
-        <p>{explainPlace(user, place)}</p>
+        <p>{origin ? explainPlace(user, place, origin) : place.summary}</p>
       </section>
       <dl className="facts">
         <div>
@@ -66,7 +68,7 @@ export function PlaceScreen({ id }: { id: string }) {
         <div>
           <dt>From</dt>
           <dd>
-            {ANCHOR.label}, {ANCHOR.detail}
+            {origin ? `${origin.label}, ${origin.detail}` : "Your location, once it’s on"}
           </dd>
         </div>
       </dl>
@@ -77,7 +79,17 @@ export function PlaceScreen({ id }: { id: string }) {
         <p className="tip">{place.tip}</p>
       </div>
       <div className="dock">
-        <button type="button" className="btn btn-clay btn-block" onClick={() => go({ name: "generating-quest", avoid: [] })}>
+        <OpenInMaps place={place} />
+        <button
+          type="button"
+          className="btn btn-clay btn-block"
+          onClick={() => {
+            void (async () => {
+              if (!origin && !(await request())) return;
+              go({ name: "generating-quest", avoid: [] });
+            })();
+          }}
+        >
           🎲 Give me a side quest
         </button>
       </div>

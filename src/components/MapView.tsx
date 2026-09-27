@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { DesignIcon, categoryIcons, categoryColors } from "./DesignIcon";
-import { ANCHOR } from "../pipeline/geo";
+import type { CityArea, WalkStart } from "../pipeline/geo";
 import { CATEGORIES, type CategoryId, type DataSource } from "../pipeline/types";
 
 export type MapPlace = {
@@ -19,28 +22,35 @@ export type MapPlace = {
 
 type Props = {
   places: MapPlace[];
+  area: CityArea;
+  you: WalkStart | null;
+  onLocate?: () => void;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onOpen: (id: string) => void;
 };
 
-export function MapView({ places, selectedId, onSelect, onOpen }: Props) {
+export function MapView({ places, area, you, selectedId, onSelect, onOpen, onLocate }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
-  const [zoom, setZoom] = useState(15);
+  const [zoom, setZoom] = useState(area.zoom);
   const [tileError, setTileError] = useState(false);
   const callbacks = useRef({ onSelect, onOpen });
   callbacks.current = { onSelect, onOpen };
   const selected = places.find((place) => place.id === selectedId);
+  const areaRef = useRef(area);
+  areaRef.current = area;
+  const centeredOnYou = useRef(false);
 
   useEffect(() => {
     if (!container.current) return;
+    const start = areaRef.current;
     const instance = L.map(container.current, {
       zoomControl: false,
       scrollWheelZoom: false,
-      minZoom: 13,
+      minZoom: 10,
       maxZoom: 19,
-    }).setView([ANCHOR.lat, ANCHOR.lng], 15);
+    }).setView([start.center.lat, start.center.lng], start.zoom);
     instance.attributionControl.setPrefix(false);
     const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -50,9 +60,6 @@ export function MapView({ places, selectedId, onSelect, onOpen }: Props) {
     tiles.on("tileload", () => setTileError(false));
     instance.on("zoomend", () => setZoom(instance.getZoom()));
     instance.on("click", () => callbacks.current.onSelect(null));
-    L.circleMarker([ANCHOR.lat, ANCHOR.lng], {
-      radius: 7, color: "white", weight: 3, fillColor: "#13293d", fillOpacity: 1,
-    }).addTo(instance).bindTooltip("Starting point · College Walk");
     const resize = new ResizeObserver(() => instance.invalidateSize());
     resize.observe(container.current);
     setMap(instance);
@@ -64,7 +71,38 @@ export function MapView({ places, selectedId, onSelect, onOpen }: Props) {
 
   useEffect(() => {
     if (!map) return;
-    const markers = L.layerGroup().addTo(map);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const view: L.LatLngExpression = [area.center.lat, area.center.lng];
+    if (reduce) map.setView(view, area.zoom);
+    else map.flyTo(view, area.zoom, { duration: 0.6 });
+  }, [map, area]);
+
+  useEffect(() => {
+    if (!map || !you || centeredOnYou.current) return;
+    centeredOnYou.current = true;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const view: L.LatLngExpression = [you.lat, you.lng];
+    if (reduce) map.setView(view, Math.max(map.getZoom(), 15));
+    else map.flyTo(view, Math.max(map.getZoom(), 15), { duration: 0.6 });
+  }, [map, you]);
+
+  useEffect(() => {
+    if (!map) return;
+    const markers = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      maxClusterRadius: 46,
+      spiderfyOnMaxZoom: true,
+      disableClusteringAtZoom: 17,
+    });
+    const start = you
+      ? L.circleMarker([you.lat, you.lng], {
+          radius: 7,
+          color: "white",
+          weight: 3,
+          fillColor: "#13293d",
+          fillOpacity: 1,
+        }).addTo(map).bindTooltip(`Starting point · ${you.label}`)
+      : null;
     for (const place of places) {
       if (!Number.isFinite(place.lat) || !Number.isFinite(place.lng)) continue;
       const active = selectedId === place.id;
@@ -80,21 +118,24 @@ export function MapView({ places, selectedId, onSelect, onOpen }: Props) {
         if (active) callbacks.current.onOpen(place.id);
         else callbacks.current.onSelect(place.id);
       };
-      const marker = L.marker([place.lat, place.lng], {
-        icon: L.divIcon({ html: button, className: "street-map-marker", iconSize: [30, 30], iconAnchor: [15, 15] }),
-        keyboard: false,
-        zIndexOffset: active ? 1000 : 0,
-      }).addTo(markers);
-      const label = document.createElement("span");
-      label.textContent = place.name;
-      marker.bindTooltip(label, { direction: "top", offset: [0, -16] });
+      markers.addLayer(
+        L.marker([place.lat, place.lng], {
+          icon: L.divIcon({ html: button, className: "street-map-marker", iconSize: [30, 30], iconAnchor: [15, 15] }),
+          keyboard: false,
+          zIndexOffset: active ? 1000 : 0,
+        }),
+      );
     }
-    return () => { markers.remove(); };
-  }, [map, places, selectedId]);
+    map.addLayer(markers);
+    return () => {
+      map.removeLayer(markers);
+      if (start) map.removeLayer(start);
+    };
+  }, [map, places, selectedId, you]);
 
   return (
     <div className="map-frame street-map-frame">
-      <div ref={container} className="street-map" aria-label="Street map of Morningside Heights" />
+      <div ref={container} className="street-map" aria-label={`Street map of ${area.name}`} />
       <div className="map-overlays">
         {selected && (
           <button type="button" className="map-callout" onClick={() => onOpen(selected.id)}>
@@ -104,9 +145,19 @@ export function MapView({ places, selectedId, onSelect, onOpen }: Props) {
         )}
         <div className="map-controls" role="group" aria-label="Map zoom">
           <button type="button" aria-label="Zoom in" title="Zoom in" disabled={!map || zoom >= 19} onClick={() => map?.zoomIn()}>+</button>
-          <button type="button" aria-label="Zoom out" title="Zoom out" disabled={!map || zoom <= 13} onClick={() => map?.zoomOut()}>−</button>
+          <button type="button" aria-label="Zoom out" title="Zoom out" disabled={!map || zoom <= 10} onClick={() => map?.zoomOut()}>−</button>
         </div>
-        <div className="map-legend"><span><i className="legend-you" /> College Walk</span><span>Colors by activity</span></div>
+        <div className="map-legend"><span><i className="legend-you" /> {you ? you.label : "Waiting for your location"}</span><span>Colors by activity</span></div>
+        <button
+          type="button"
+          className="map-locate"
+          onClick={() => {
+            if (you) map?.flyTo([you.lat, you.lng], Math.max(map.getZoom(), 15), { duration: 0.5 });
+            else onLocate?.();
+          }}
+        >
+          {you ? "Center on me" : "Use my location"}
+        </button>
         {tileError && <p className="map-load-error" role="status">Street map couldn’t load. Check your connection.</p>}
       </div>
     </div>

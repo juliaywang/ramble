@@ -15,7 +15,7 @@ export type NeighborhoodFeed = {
 /**
  * NYC Open Data rows are normalized, then curated narrative is laid over the
  * places the prototype already knows. Cafés, parks, and live discoveries that
- * are not in these five datasets stay in the feed. Tavily is still the
+ * are not in these datasets stay in the feed. Tavily is still the
  * Live Discovery label — that client is the next seam.
  */
 export function assembleFeed(openPlaces: Discovery[], updatedFrom: NeighborhoodFeed["updatedFrom"]): NeighborhoodFeed {
@@ -104,6 +104,12 @@ const GENERATED: Partial<Record<Discovery["category"], { title: string; objectiv
     objective: "Spend one room at {name} without rushing the next one. Note a single object you want to remember.",
     visitMinutes: 25,
     xp: 45,
+  },
+  culture: {
+    title: "Read the bulletin board",
+    objective: "Stop at {name} and read one posted program, class, or meeting. If the door is locked, the board still counts.",
+    visitMinutes: 20,
+    xp: 35,
   },
 };
 

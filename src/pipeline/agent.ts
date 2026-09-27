@@ -1,4 +1,4 @@
-import { ANCHOR, distanceMiles, walkMinutes } from "./geo";
+import { ANCHOR, distanceMiles, walkMinutes, type WalkStart } from "./geo";
 import {
   CATEGORIES,
   INTERESTS,
@@ -56,17 +56,17 @@ export function matchScore(interests: InterestId[], tags: InterestId[]) {
   return Math.min(98, 58 + hits * 14 + (hits > 0 ? 4 : 0));
 }
 
-export function explainPlace(person: Person, place: Discovery): string {
+export function explainPlace(person: Person, place: Discovery, origin: WalkStart = ANCHOR): string {
   const hits = overlap(person.interests, place.tags).map(interestTitle);
-  const minutes = walkMinutes(distanceMiles(ANCHOR, place));
-  const located = `${place.summary} It's ${minutes} minutes from College Walk.`;
+  const minutes = walkMinutes(distanceMiles(origin, place));
+  const located = `${place.summary} It's ${minutes} minutes from ${origin.label}.`;
   if (hits.length === 0) return located;
   return `Because you picked ${listPhrase(hits)}. ${located}`;
 }
 
-export function explainQuest(person: Person, place: Discovery, places: Discovery[]): string {
+export function explainQuest(person: Person, place: Discovery, places: Discovery[], origin: WalkStart = ANCHOR): string {
   const hits = overlap(person.interests, place.tags).map(interestTitle);
-  const minutes = walkMinutes(distanceMiles(ANCHOR, place));
+  const minutes = walkMinutes(distanceMiles(origin, place));
   const gap =
     place.passportCategory !== null && !isCategoryStamped(person, place.passportCategory, places);
   const interestLine = hits.length
@@ -76,12 +76,12 @@ export function explainQuest(person: Person, place: Discovery, places: Discovery
     ? `Your passport still needs ${passportLabel(place.passportCategory!)}.`
     : "You've started this kind of place already — this one goes deeper.";
   const source = place.source === "nyc-open-data" ? "Verified NYC data" : "A live discovery";
-  return `${source}, ${minutes} minutes from College Walk. ${interestLine} ${gapLine}`;
+  return `${source}, ${minutes} minutes from ${origin.label}. ${interestLine} ${gapLine}`;
 }
 
-export function rankDiscoveries(person: Person, places: Discovery[]): RankedDiscovery[] {
+export function rankDiscoveries(person: Person, places: Discovery[], origin: WalkStart = ANCHOR): RankedDiscovery[] {
   const scored = places.map((place) => {
-    const miles = distanceMiles(ANCHOR, place);
+    const miles = distanceMiles(origin, place);
     const minutes = walkMinutes(miles);
     const match = matchScore(person.interests, place.tags);
     const discoveredBonus = person.discoveredIds.includes(place.id) ? 0 : 6;
@@ -91,7 +91,7 @@ export function rankDiscoveries(person: Person, places: Discovery[]): RankedDisc
         match,
         miles,
         minutes,
-        why: explainPlace(person, place),
+        why: explainPlace(person, place, origin),
       } satisfies RankedDiscovery,
       sort: match + discoveredBonus - minutes * 0.25,
     };
@@ -177,6 +177,7 @@ export function rollSideQuest(
   places: Discovery[],
   templates: QuestTemplate[],
   avoidTemplateIds: string[] = [],
+  origin: WalkStart = ANCHOR,
 ): QuestDraft | null {
   const taken = takenTemplateIds(person, avoidTemplateIds);
   const scored = templates
@@ -185,7 +186,7 @@ export function rollSideQuest(
       const place = places.find((item) => item.id === template.discoveryId);
       if (!place) return [];
       const hits = overlap(person.interests, place.tags).length;
-      const minutes = walkMinutes(distanceMiles(ANCHOR, place));
+      const minutes = walkMinutes(distanceMiles(origin, place));
       const gap =
         place.passportCategory !== null && !isCategoryStamped(person, place.passportCategory, places);
       const fresh = person.discoveredIds.includes(place.id) ? 0 : 8;
@@ -203,20 +204,20 @@ export function rollSideQuest(
     objective: best.template.objective,
     visitMinutes: best.template.visitMinutes,
     xp: best.template.xp,
-    why: explainQuest(person, best.place, places),
+    why: explainQuest(person, best.place, places, origin),
   };
 }
 
-function journeyScore(person: Person, place: Discovery, places: Discovery[]) {
+function journeyScore(person: Person, place: Discovery, places: Discovery[], origin: WalkStart) {
   const hits = overlap(person.interests, place.tags).length;
-  const minutes = walkMinutes(distanceMiles(ANCHOR, place));
+  const minutes = walkMinutes(distanceMiles(origin, place));
   const gap =
     place.passportCategory !== null && !isCategoryStamped(person, place.passportCategory, places);
   const fresh = person.discoveredIds.includes(place.id) ? 0 : 8;
   return 24 + hits * 16 + (gap ? 10 : 0) + fresh - minutes * 0.4;
 }
 
-function chooseStops(ranked: Discovery[], stopCount: number) {
+function chooseStops(ranked: Discovery[], stopCount: number, origin: WalkStart) {
   const picked: Discovery[] = [];
   const used = new Set<string>();
   const first = ranked[0];
@@ -235,7 +236,7 @@ function chooseStops(ranked: Discovery[], stopCount: number) {
     if (picked.some((item) => item.id === place.id)) continue;
     picked.push(place);
   }
-  return orderByWalk(picked);
+  return orderByWalk(picked, origin);
 }
 
 /**
@@ -248,19 +249,21 @@ export function buildJourney(
   duration: JourneyDuration,
   avoidSignature?: string,
   builtAt = new Date().toISOString(),
+  origin: WalkStart = ANCHOR,
 ): JourneyPlan {
   const stopCount = duration === 30 ? 1 : duration === 60 ? 2 : duration === 90 ? 3 : 4;
   const ranked = [...places].sort(
-    (a, b) => journeyScore(person, b, places) - journeyScore(person, a, places) || a.id.localeCompare(b.id),
+    (a, b) => journeyScore(person, b, places, origin) - journeyScore(person, a, places, origin) || a.id.localeCompare(b.id),
   );
 
-  let ordered = chooseStops(ranked, stopCount);
+  let ordered = chooseStops(ranked, stopCount, origin);
   let signature = ordered.map((place) => place.id).join(">");
   let repeated = false;
   if (avoidSignature && signature === avoidSignature && ranked[0]) {
     const alt = chooseStops(
       ranked.filter((place) => place.id !== ranked[0]?.id),
       stopCount,
+      origin,
     );
     const altSignature = alt.map((place) => place.id).join(">");
     if (altSignature && altSignature !== signature) {
@@ -272,7 +275,7 @@ export function buildJourney(
   }
 
   const walks: number[] = [];
-  let cursor: { lat: number; lng: number } = ANCHOR;
+  let cursor: { lat: number; lng: number } = origin;
   for (const place of ordered) {
     walks.push(walkMinutes(distanceMiles(cursor, place)));
     cursor = place;
@@ -300,8 +303,8 @@ export function buildJourney(
     [...new Set(ordered.flatMap((place) => overlap(person.interests, place.tags)))].map(interestTitle),
   );
   const intro = interestNames
-    ? `Built around ${interestNames}, using verified NYC places and live discoveries within a short walk of College Walk. About ${totalMinutes} minutes with the stops included.`
-    : `A walk threaded from College Walk through nearby verified places and live discoveries. About ${totalMinutes} minutes with the stops included.`;
+    ? `Built around ${interestNames}, using verified NYC places and live discoveries within a short walk of ${origin.label}. About ${totalMinutes} minutes with the stops included.`
+    : `A walk threaded from ${origin.label} through nearby verified places and live discoveries. About ${totalMinutes} minutes with the stops included.`;
 
   return {
     duration,
@@ -313,13 +316,14 @@ export function buildJourney(
     signature,
     repeated,
     builtAt,
+    startLabel: origin.label,
   };
 }
 
-function orderByWalk(places: Discovery[]) {
+function orderByWalk(places: Discovery[], origin: WalkStart) {
   const remaining = [...places];
   const ordered: Discovery[] = [];
-  let cursor: { lat: number; lng: number } = ANCHOR;
+  let cursor: { lat: number; lng: number } = origin;
   while (remaining.length) {
     remaining.sort(
       (a, b) => distanceMiles(cursor, a) - distanceMiles(cursor, b) || a.id.localeCompare(b.id),

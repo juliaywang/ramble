@@ -1,11 +1,10 @@
 import type { Discovery } from "./types";
 
 /**
- * Mock neighborhood feed for Morningside Heights.
- * Each record is already in the normalized Discovery shape that
- * NYC Open Data adapters and Tavily results should produce.
+ * Curated Morningside Heights places the city datasets do not cover,
+ * plus the written copy laid over the places those datasets do know.
  */
-export const DISCOVERIES: Discovery[] = [
+const MORNINGSIDE: Omit<Discovery, "borough">[] = [
   {
     id: "book-culture",
     name: "Book Culture on Broadway",
@@ -133,38 +132,6 @@ export const DISCOVERIES: Discovery[] = [
     tip: "Count the giraffes, then walk the rim until a plaque surprises you.",
     tags: ["art", "history", "culture"],
     passportCategory: "cultural",
-  },
-  {
-    id: "cathedral",
-    name: "Cathedral of St. John the Divine",
-    category: "historic",
-    source: "nyc-open-data",
-    sourceDetail: "NYC Open Data · cultural institutions",
-    lat: 40.80385,
-    lng: -73.96185,
-    address: "1047 Amsterdam Avenue",
-    hours: "Grounds open by day. Sanctuary hours are posted at the door.",
-    summary: "One of the largest cathedrals in the world, still unfinished, with peacocks on the lawn.",
-    about: "The stonework stops on purpose in places. That unfinished edge is the thing to find, more than a photo of the rose window. The close connects the Hungarian Pastry Shop, the Peace Fountain, and a flock of peacocks who do not care about your schedule. Step inside if the door is open. The scale only lands in person.",
-    tip: "Find one unfinished edge before you leave. The peacocks are a bonus, not the assignment.",
-    tags: ["history", "culture", "art"],
-    passportCategory: "historic",
-  },
-  {
-    id: "grants-tomb",
-    name: "General Grant National Memorial",
-    category: "historic",
-    source: "nyc-open-data",
-    sourceDetail: "NYC Open Data · historic sites",
-    lat: 40.81335,
-    lng: -73.96315,
-    address: "Riverside Drive at West 122nd Street",
-    hours: "National Park Service site. Check nps.gov so you don't meet a locked door.",
-    summary: "The memorial above the Hudson, ringed by mosaic benches made with the neighborhood.",
-    about: "Grant's Tomb is the formal monument. The benches around it were built in the 1970s with neighborhood artists and residents, and they are the part that feels like this block rather than a capital. Read one inscription upstairs, then sit on a bench and notice the two kinds of making. Sakura Park and Riverside Church are the next two minutes north and south.",
-    tip: "If the memorial is closed, the benches and the view are still the visit.",
-    tags: ["history"],
-    passportCategory: "historic",
   },
   {
     id: "morningside-park",
@@ -359,3 +326,8 @@ export const DISCOVERIES: Discovery[] = [
     passportCategory: null,
   },
 ];
+
+export const DISCOVERIES: Discovery[] = MORNINGSIDE.map((place) => ({
+  ...place,
+  borough: "manhattan",
+}));

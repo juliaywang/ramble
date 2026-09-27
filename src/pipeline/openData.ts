@@ -1,17 +1,15 @@
-import { BOUNDS } from "./geo";
+import { BOUNDS, boroughFromPoint, boroughName, canonicalBorough, type BoroughId } from "./geo";
 import type { CategoryId, Discovery, InterestId, PassportCategoryId } from "./types";
 import artJson from "./raw/art.json";
 import facilitiesJson from "./raw/facilities.json";
 import gardensJson from "./raw/gardens.json";
-import landmarksJson from "./raw/landmarks.json";
 import marketsJson from "./raw/markets.json";
 
-/** The five NYC Open Data SODA endpoints this neighborhood draws from. */
+/** NYC Open Data SODA endpoints, queried across all five boroughs. Landmarks are not included. */
 export const NYC_OPEN_DATA = {
   markets: "https://data.cityofnewyork.us/resource/8vwk-6iz2.json",
   art: "https://data.cityofnewyork.us/resource/2pg3-gcaa.json",
   gardens: "https://data.cityofnewyork.us/resource/p78i-pat6.json",
-  landmarks: "https://data.cityofnewyork.us/resource/buis-pvji.json",
   facilities: "https://data.cityofnewyork.us/resource/ji82-xba5.json",
 } as const;
 
@@ -19,7 +17,6 @@ const SOURCE = {
   markets: "NYC Open Data · Farmers Markets",
   art: "NYC Open Data · Public art",
   gardens: "NYC Open Data · GreenThumb community gardens",
-  landmarks: "NYC Open Data · Individual landmarks",
   facilities: "NYC Open Data · Libraries, museums, and community centers",
 } as const;
 
@@ -36,27 +33,22 @@ const QUERIES: Record<Dataset, Record<string, string>> = {
       "year,marketname,streetaddress,borough,daysoperation,hoursoperations,latitude,longitude,open_year_round,accepts_ebt",
     $where: BOX,
     $order: "year DESC",
-    $limit: "80",
+    $limit: "5000",
   },
   art: {
     $select:
       "title,primary_artist_first,primary_artist_last,artwork_type1,material,location_name,address,date_created,date_dedicated,latitude,longitude,borough",
-    $where: BOX,
-    $limit: "80",
+    // A few longitude values are not numeric. Casting the column fails the whole query, so bounds are applied after download.
+    $limit: "5000",
   },
   gardens: {
     $where: `lat::number > ${BOUNDS.south} AND lat::number < ${BOUNDS.north} AND lon::number > ${BOUNDS.west} AND lon::number < ${BOUNDS.east} AND upper(status) = 'ACTIVE'`,
-    $limit: "40",
-  },
-  landmarks: {
-    $select: "lpc_name,address,landmarkty,desdate,borough,latitude,longitude",
-    $where: BOX,
-    $limit: "40",
+    $limit: "2000",
   },
   facilities: {
-    $select: "facname,address,factype,facgroup,facsubgrp,opname,latitude,longitude",
+    $select: "facname,address,factype,facgroup,facsubgrp,opname,boro,latitude,longitude",
     $where: `${BOX} AND (upper(facsubgrp) like '%LIBRAR%' OR upper(factype) like '%LIBRAR%' OR upper(facsubgrp) like '%MUSEUM%' OR upper(factype) like '%MUSEUM%' OR upper(facsubgrp) like '%COMMUNITY CENTER%' OR upper(factype) like '%COMMUNITY CENTER%')`,
-    $limit: "40",
+    $limit: "5000",
   },
 };
 
@@ -77,7 +69,6 @@ export function snapshotBundle(): OpenDataBundle {
     markets: asRows(marketsJson),
     art: asRows(artJson),
     gardens: asRows(gardensJson),
-    landmarks: asRows(landmarksJson),
     facilities: asRows(facilitiesJson),
   };
 }
@@ -89,15 +80,6 @@ export function stableId(name: string): string | null {
   if (n.includes("gatehouse garden")) return "gatehouse";
   if (n.includes("morningside heights library")) return "nypl";
   if (n.includes("roerich")) return "roerich";
-  if (
-    n.includes("st. john the divine") ||
-    n.includes("st john the divine") ||
-    n.includes("cathedral church of st. john")
-  ) {
-    return "cathedral";
-  }
-  if (n.includes("grant") && n.includes("tomb")) return "grants-tomb";
-  if (n.includes("riverside church")) return "riverside-church";
   return null;
 }
 
@@ -107,7 +89,6 @@ function applyStableId(dataset: Dataset, name: string): string | null {
   if (dataset === "markets" && id === "greenmarket") return id;
   if (dataset === "gardens" && id === "gatehouse") return id;
   if (dataset === "facilities" && (id === "nypl" || id === "roerich")) return id;
-  if (dataset === "landmarks" && (id === "cathedral" || id === "grants-tomb" || id === "riverside-church")) return id;
   return null;
 }
 
@@ -148,12 +129,17 @@ function text(value: string | null | undefined) {
 }
 
 function coord(value: string | null | undefined) {
-  const n = Number(value);
+  const match = (value ?? "").match(/-?\d+(?:\.\d+)?/);
+  const n = Number(match?.[0] ?? value);
   return Number.isFinite(n) ? n : null;
 }
 
 function inBounds(lat: number, lng: number) {
   return lat > BOUNDS.south && lat < BOUNDS.north && lng > BOUNDS.west && lng < BOUNDS.east;
+}
+
+function resolveBorough(raw: string | null | undefined, lat: number, lng: number): BoroughId | null {
+  return canonicalBorough(raw) ?? boroughFromPoint(lat, lng);
 }
 
 function marketKey(name: string) {
@@ -206,10 +192,12 @@ function normalizeMarkets(rows: Row[]): Discovery[] {
     const lat = coord(row.latitude);
     const lng = coord(row.longitude);
     if (!name || lat === null || lng === null || !inBounds(lat, lng)) continue;
+    const borough = resolveBorough(row.borough, lat, lng);
+    if (!borough) continue;
     const key = marketKey(name);
     if (seen.has(key)) continue;
     seen.add(key);
-    const address = tidy(text(row.streetaddress)) || "Morningside Heights";
+    const address = tidy(text(row.streetaddress)) || boroughName(borough);
     const days = text(row.daysoperation);
     const hours = text(row.hoursoperations);
     const ebt = text(row.accepts_ebt).toLowerCase() === "yes";
@@ -220,6 +208,7 @@ function normalizeMarkets(rows: Row[]): Discovery[] {
         name,
         category: "farmers-market",
         sourceDetail: SOURCE.markets,
+        borough,
         lat,
         lng,
         address,
@@ -243,18 +232,21 @@ function normalizeArt(rows: Row[]): Discovery[] {
     const lat = coord(row.latitude);
     const lng = coord(row.longitude);
     if (!name || lat === null || lng === null || !inBounds(lat, lng)) return [];
+    const borough = resolveBorough(row.borough, lat, lng);
+    if (!borough) return [];
     const artist = artistName(row);
     const kind = text(row.artwork_type1) || "Work";
     const where = text(row.location_name);
     const material = text(row.material);
     const year = text(row.date_created);
-    const address = tidy(text(row.address)) || where || "Morningside Heights";
+    const address = tidy(text(row.address)) || where || boroughName(borough);
     return [
       discovery({
         id: placeId("art", name, kind),
         name,
         category: "public-art",
         sourceDetail: SOURCE.art,
+        borough,
         lat,
         lng,
         address,
@@ -277,13 +269,16 @@ function normalizeGardens(rows: Row[]): Discovery[] {
     const status = text(row.status);
     if (!name || lat === null || lng === null || !inBounds(lat, lng)) return [];
     if (status && status.toLowerCase() !== "active") return [];
-    const address = tidy(text(row.address)) || "Morningside Heights";
+    const borough = resolveBorough(row.borough, lat, lng);
+    if (!borough) return [];
+    const address = tidy(text(row.address)) || boroughName(borough);
     return [
       discovery({
         id: placeId("gardens", name, address),
         name,
         category: "garden",
         sourceDetail: SOURCE.gardens,
+        borough,
         lat,
         lng,
         address,
@@ -293,35 +288,6 @@ function normalizeGardens(rows: Row[]): Discovery[] {
         tip: "If the gate is locked, the posted hours are the invitation back.",
         tags: ["sustainability", "volunteering"],
         passportCategory: "community-event",
-      }),
-    ];
-  });
-}
-
-function normalizeLandmarks(rows: Row[]): Discovery[] {
-  return rows.flatMap((row) => {
-    const name = tidy(text(row.lpc_name));
-    const lat = coord(row.latitude);
-    const lng = coord(row.longitude);
-    if (!name || lat === null || lng === null || !inBounds(lat, lng)) return [];
-    const address = tidy(text(row.address)).replace(/,\s*$/, "") || "Morningside Heights";
-    const designated = text(row.desdate);
-    const kind = text(row.landmarkty) || "Individual Landmark";
-    return [
-      discovery({
-        id: placeId("landmarks", name, address),
-        name,
-        category: "historic",
-        sourceDetail: SOURCE.landmarks,
-        lat,
-        lng,
-        address,
-        hours: designated ? `Designated ${designated}.` : "Individual landmark.",
-        summary: `${kind} at ${address}.`,
-        about: `${name} is on the Landmarks Preservation Commission list${designated ? `, designated ${designated}` : ""}.`,
-        tip: "Look for the plaque, then one detail the plaque doesn't mention.",
-        tags: ["history", "culture"],
-        passportCategory: "historic",
       }),
     ];
   });
@@ -344,10 +310,12 @@ function normalizeFacilities(rows: Row[]): Discovery[] {
     const lat = coord(row.latitude);
     const lng = coord(row.longitude);
     if (!kind || lat === null || lng === null || !inBounds(lat, lng)) return [];
+    const borough = resolveBorough(row.boro ?? row.borough, lat, lng);
+    if (!borough) return [];
     let name = tidy(text(row.facname));
     if (!name) return [];
     if (/^grant$/i.test(name) && kind.category === "culture") name = "Grant Houses Community Center";
-    const address = tidy(text(row.address)) || "Morningside Heights";
+    const address = tidy(text(row.address)) || boroughName(borough);
     const operator = tidy(text(row.opname));
     const label =
       kind.category === "library" ? "Library" : kind.category === "museum" ? "Museum" : "Community center";
@@ -357,6 +325,7 @@ function normalizeFacilities(rows: Row[]): Discovery[] {
         name,
         category: kind.category,
         sourceDetail: SOURCE.facilities,
+        borough,
         lat,
         lng,
         address,
@@ -381,7 +350,6 @@ export function normalizeBundle(bundle: OpenDataBundle): Discovery[] {
     ...normalizeMarkets(bundle.markets),
     ...normalizeArt(bundle.art),
     ...normalizeGardens(bundle.gardens),
-    ...normalizeLandmarks(bundle.landmarks),
     ...normalizeFacilities(bundle.facilities),
   ];
   const seen = new Set<string>();
@@ -410,7 +378,7 @@ async function fetchDataset(dataset: Dataset, fallback: Row[]): Promise<{ rows: 
   }
 }
 
-/** Live SODA pull. Each dataset falls back to the saved neighborhood copy on its own. */
+/** Live SODA pull across New York City. Each dataset falls back to the saved copy on its own. */
 export async function loadOpenDataPlaces(): Promise<{ places: Discovery[]; live: boolean }> {
   const saved = snapshotBundle();
   const datasets = Object.keys(NYC_OPEN_DATA) as Dataset[];
