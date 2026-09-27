@@ -1,3 +1,4 @@
+import { LevelProgress } from "../components/LevelProgress";
 import { useState, type FormEvent } from "react";
 import { getUserId, isUsernameTaken } from "../lib/friendsService";
 import { firstName, formatWhen, greeting, normalizeUsername, usernameFromName } from "../lib/format";
@@ -133,6 +134,7 @@ export function ProfileScreen() {
         <button type="submit" className="btn btn-primary btn-block">Save profile</button>
       </form>
 
+      <LevelProgress quests={user.quests} />
       <div className="stats">
         <button type="button" className="stat stat-link" onClick={() => jumpTo("profile-quests")} aria-controls="profile-quests">
           <b>{completed.length}</b>

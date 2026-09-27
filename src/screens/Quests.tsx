@@ -1,3 +1,5 @@
+import { progression } from "../pipeline/progression";
+import { LevelProgress } from "../components/LevelProgress";
 import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
 import { useEffect, useMemo, useState } from "react";
 import { BackRow, Generating, OpenInMaps, PlaceMedia, SourceBadge } from "../components/ui";
@@ -63,7 +65,7 @@ export function QuestsScreen({ highlightId }: { highlightId?: string }) {
         >
           🎲 Give me a side quest
         </button>
-        <p className="fine">{totalXp(user.quests)} exploration XP so far</p>
+        <LevelProgress quests={user.quests} />
       </header>
 
 
@@ -284,6 +286,7 @@ export function QuestCompleteScreen({ questId }: { questId: string }) {
   const quest = user.quests.find((item) => item.id === questId);
   const place = usePlace(quest?.discoveryId);
   if (!quest || !place) return null;
+  const reward = progression(user.quests).rewards[quest.id];
   const rows = passportRows(user, feed.places);
   const after = passportPercent(rows);
   const gained =
@@ -321,7 +324,10 @@ export function QuestCompleteScreen({ questId }: { questId: string }) {
           ))}
         </ul>
       </article>
-      <p className="fine">+{quest.xp} XP · {totalXp(user.quests)} total · {user.discoveredIds.length} places discovered</p>
+      <p className="fine">+{reward?.total ?? quest.xp} XP · {totalXp(user.quests)} total · {user.discoveredIds.length} places discovered</p>
+      {reward && <p className="fine">{reward.base} quest XP · {reward.destination} destination bonus · {reward.milestone} milestone bonus</p>}
+      {reward && reward.levelAfter > reward.levelBefore && <h2>Level up! You reached level {reward.levelAfter}.</h2>}
+      <LevelProgress quests={user.quests} />
       <div className="stack">
         <button type="button" className="btn btn-primary btn-block" onClick={() => tab({ name: "journey" })}>
           ✨ Build my journey

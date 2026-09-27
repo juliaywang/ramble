@@ -1,3 +1,4 @@
+import { LevelProgress } from "../components/LevelProgress";
 import { passportPercent, passportRows } from "../pipeline/agent";
 import { NEIGHBORHOOD, STARTER_DISCOVERED_IDS, type PassportCategoryId } from "../pipeline/types";
 import { useFeed } from "../state/FeedContext";
@@ -18,6 +19,7 @@ export function PassportScreen({ highlight }: { highlight?: PassportCategoryId }
     <section className="page">
       <p className="eyebrow">Neighborhood passport</p>
       <h1>What you’ve actually walked.</h1>
+      <LevelProgress quests={user.quests} details />
       <article className="booklet">
         <div className="booklet-head">
           <div>

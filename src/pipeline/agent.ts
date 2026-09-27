@@ -1,3 +1,4 @@
+import { progression } from "./progression";
 import { ANCHOR, distanceMiles, walkMinutes, type WalkStart } from "./geo";
 import {
   CATEGORIES,
@@ -364,5 +365,5 @@ function orderByWalk(places: Discovery[], origin: WalkStart) {
 }
 
 export function totalXp(quests: UserAccount["quests"]) {
-  return quests.filter((quest) => quest.status === "completed").reduce((sum, quest) => sum + quest.xp, 0);
+  return progression(quests).total;
 }
