@@ -12,8 +12,8 @@
   --clay: #d35f8f;
   --clay-deep: #a63c69;
   --shadow: 0 14px 36px rgba(70, 46, 24, 0.08);
-  --serif: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
-  --sans: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  --serif: "Fredoka", "Arial Rounded MT Bold", sans-serif;
+  --sans: "Nunito", "Avenir Next", "Segoe UI", sans-serif;
   --shell: 402px;
   --nav-h: calc(78px + env(safe-area-inset-bottom));
   color-scheme: light;
@@ -31,21 +31,21 @@ body {
     #ddd4c6;
   -webkit-font-smoothing: antialiased;
 }
-button, input { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 p { margin: 0; }
-h1, h2, h3 { font-weight: 800; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; }
 h1 {
   font-family: var(--serif);
   font-size: 34px;
-  letter-spacing: -0.035em;
-  line-height: 1.02;
+  letter-spacing: -0.015em;
+  line-height: 1.12;
   margin: 0 0 8px;
 }
 h2 {
   font-family: var(--serif);
   font-size: 26px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   line-height: 1.1;
   margin: 0;
 }
@@ -599,7 +599,7 @@ h3 { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
   font-family: var(--serif);
   font-size: 18px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
 }
 .meta-tiles span { color: var(--muted); font-size: 12px; }
 
@@ -857,7 +857,7 @@ h3 { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
 /* Visual system from the Figma Make export. */
 :root { --line: #d4d4cd; --shadow: 0 12px 30px rgb(29 40 35 / 0.08); }
 body { min-width: 320px; background: var(--paper); }
-h1, h2, h3 { font-weight: 800; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; }
 h1 { font-size: 28px; line-height: 1.2; }
 h2 { font-size: 20px; line-height: 1.3; }
 .app-shell { box-shadow: none; }
@@ -871,14 +871,14 @@ h2 { font-size: 20px; line-height: 1.3; }
 .btn-primary:hover { background: var(--ink-soft); }
 .btn-clay { background: #ffc9df; color: #a63c69; box-shadow: none; }
 .btn-ghost { background: white; border-color: var(--line); }
-.brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; letter-spacing: -1px; }
+.brand { font-family: var(--serif); display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; letter-spacing: -1px; }
 .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; color: #a9bea7; background: var(--ink); transform: rotate(-6deg); }
 .brand-mark svg { width: 24px; height: 24px; }
 .sidebar { display: none; }
 .welcome { padding: 0; display: grid; }
 .welcome-main { display: flex; flex-direction: column; padding: 32px 24px; min-height: 100dvh; }
 .welcome-copy { justify-content: center; padding: 64px 0; }
-.welcome h1 { font-size: clamp(40px, 4.8vw, 64px); line-height: 1; letter-spacing: -.045em; margin: 0 0 24px; }
+.welcome h1 { font-size: clamp(40px, 4.8vw, 64px); line-height: 1.08; letter-spacing: -.02em; margin: 0 0 24px; }
 .welcome h1 span { color: var(--clay); }
 .welcome .lede { font-size: 18px; max-width: 510px; }
 .welcome-badge { display: flex; align-items: center; gap: 8px; width: fit-content; background: var(--leaf); padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; margin-bottom: 24px; }
@@ -940,7 +940,7 @@ h2 { font-size: 20px; line-height: 1.3; }
 .avatar { background: var(--clay); width: 72px; height: 72px; }
 .stat { border-radius: 24px; padding: 20px; }
 .stat b { font-size: 26px; }
-.quest-hero { padding: 28px; border-radius: 32px; background: white; border: 1px solid var(--line); }
+.quest-hero { padding: 0; background: transparent; border: 0; }
 .quest-hero h1 { max-width: 560px; }
 .quest-hero .btn { width: auto; margin-top: 10px; }
 .quest-row { padding: 20px; }
