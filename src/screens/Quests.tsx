@@ -64,7 +64,8 @@ export function QuestsScreen({ highlightId }: { highlightId?: string }) {
             })();
           }}
         >
-          🎲 Give me a side quest
+          <DesignIcon name="dice" size="sm" />
+          Give me a side quest
         </button>
         <LevelProgress quests={user.quests} />
       </header>
@@ -337,7 +338,7 @@ export function QuestCompleteScreen({ questId }: { questId: string }) {
       <LevelProgress quests={user.quests} />
       <div className="stack">
         <button type="button" className="btn btn-primary btn-block" onClick={() => tab({ name: "journey" })}>
-          ✨ Build my journey
+          Build my journey
         </button>
         <button type="button" className="btn btn-ghost btn-block" onClick={() => tab({ name: "quests", highlightId: quest.id })}>
           See completed quests

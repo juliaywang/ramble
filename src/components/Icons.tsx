@@ -35,6 +35,7 @@ export function IconDice() {
       <circle cx="15" cy="15" r="1.1" fill="currentColor" />
       <circle cx="15" cy="9" r="1.1" fill="currentColor" />
       <circle cx="9" cy="15" r="1.1" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" />
     </Svg>
   );
 }
@@ -52,8 +53,8 @@ export function IconPath() {
 export function IconBook() {
   return (
     <Svg>
-      <path d="M5 5.5h6.2A2.8 2.8 0 0 1 14 8.3V19a2.4 2.4 0 0 0-2.4-2.1H5V5.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M19 5.5h-6.2A2.8 2.8 0 0 0 10 8.3V19a2.4 2.4 0 0 1 2.4-2.1H19V5.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M12 6.5C9.5 4.5 6 4 3 4.5v14c3-.5 6.5 0 9 2 2.5-2 6-2.5 9-2v-14c-3-.5-6.5 0-9 2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M12 6.5v14M6 8.5c1.1 0 2.1.2 3 .6M6 12c1.1 0 2.1.2 3 .6M15 9.1c.9-.4 1.9-.6 3-.6M15 12.6c.9-.4 1.9-.6 3-.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </Svg>
   );
 }

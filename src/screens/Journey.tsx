@@ -67,7 +67,7 @@ export function JourneyScreen() {
           })();
         }}
       >
-        ✨ Build my journey
+        Build my journey
       </button>
 
       {plan ? (

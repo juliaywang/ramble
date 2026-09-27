@@ -89,9 +89,6 @@ export function PlaceCard({
           <p className="why clamp-3">{place.why}</p>
           {quest ? (
             <div className="place-card-quest">
-              <span className="quest-pill">
-                <DesignIcon name="dice" size="sm" /> Quest
-              </span>
               <span className="quest-pill-title clamp-1">{quest.title}</span>
               <span className="quest-pill-xp">+{quest.xp} XP</span>
             </div>
