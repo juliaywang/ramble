@@ -45,9 +45,21 @@ begin
   if actor is null or item.id is null or actor not in (item.sender_id, item.recipient_id) then
     raise exception 'Invitation not found';
   end if;
-  if response in ('accepted','declined') then
-    if actor <> item.recipient_id or item.status <> 'pending' then raise exception 'Invitation already answered'; end if;
-    update public.activity_invites set status = response where id = invite_id;
+  if response = 'unaccept' then
+    if actor <> item.recipient_id or item.status <> 'accepted' then
+      raise exception 'Only the invited friend can undo an accepted invitation';
+    end if;
+    update public.activity_invites set status = 'pending' where id = invite_id;
+  elsif response = 'accepted' then
+    if actor <> item.recipient_id or item.status not in ('pending', 'declined') then
+      raise exception 'Invitation cannot be accepted';
+    end if;
+    update public.activity_invites set status = 'accepted' where id = invite_id;
+  elsif response = 'declined' then
+    if actor <> item.recipient_id or item.status not in ('pending', 'accepted') then
+      raise exception 'Invitation cannot be declined';
+    end if;
+    update public.activity_invites set status = 'declined' where id = invite_id;
   elsif response = 'check' then
     if item.status <> 'accepted' or stop_id is null or not exists (
       select 1 from jsonb_array_elements(item.stops) s where s->'quest'->>'id' = stop_id

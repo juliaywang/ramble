@@ -28,6 +28,29 @@ describe("shared activity rewards", () => {
     expect(() => updateInvite(invite(), "alice", "check", "quest1")).toThrow();
     expect(activityRewards([invite()], "alice")).toEqual([]);
   });
+  it("allows the invited friend to unaccept an accepted invitation and optionally re-join", () => {
+    let row = updateInvite(invite(), "bob", "accepted");
+    expect(row.status).toBe("accepted");
+    expect(() => updateInvite(row, "alice", "unaccept")).toThrow("Only the invited friend");
+    row = updateInvite(row, "bob", "unaccept");
+    expect(row.status).toBe("pending");
+    expect(activityRewards([row], "bob")).toEqual([]);
+    row = updateInvite(row, "bob", "accepted");
+    expect(row.status).toBe("accepted");
+  });
+  it("preserves earned rewards when undoing and rejoining", () => {
+    let row = updateInvite(invite(), "bob", "accepted");
+    row = updateInvite(row, "alice", "check", "quest1", "2026-01-01T10:00:00Z");
+    row = updateInvite(row, "bob", "check", "quest1", "2026-01-01T10:01:00Z");
+    const rewards = activityRewards([row], "bob");
+    row = updateInvite(row, "bob", "unaccept");
+    expect(activityRewards([row], "bob")).toEqual(rewards);
+    expect(() => updateInvite(row, "bob", "check", "quest1")).toThrow();
+    expect(() => updateInvite(row, "bob", "unaccept")).toThrow();
+    row = updateInvite(row, "bob", "accepted");
+    row = updateInvite(row, "bob", "check", "quest1", "2026-01-01T11:00:00Z");
+    expect(activityRewards([row], "bob")).toEqual(rewards);
+  });
   it("gives each person their own base XP, then the together bonus", () => {
     let row = updateInvite(invite(), "bob", "accepted");
     row = updateInvite(row, "alice", "check", "quest1", "2026-01-01T10:00:00Z");

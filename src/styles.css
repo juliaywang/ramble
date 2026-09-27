@@ -1938,3 +1938,6 @@ input:checked + .together-friend-body .together-choice { background: #a63c69; bo
   .together-reward { gap: 10px; padding: 12px; }
   .together-card .together-heading h2 { font-size: 19px; }
 }
+
+.invite-acceptance-actions { margin: 14px 0 18px; }
+.invite-acceptance-actions .btn { border-color: #c78ca6; color: #96365f; background: #fff5f9; min-height: 44px; }

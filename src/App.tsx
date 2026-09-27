@@ -101,7 +101,7 @@ function Routes() {
     case "friend-profile":
       return <FriendProfileScreen friendId={screen.friendId} />;
     case "profile":
-      return <ProfileScreen />;
+      return <ProfileScreen mode={screen.mode} />;
     case "settings":
       return <SettingsScreen />;
     case "info":

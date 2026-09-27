@@ -76,9 +76,6 @@ export function ExploreScreen() {
     <section className="page explore-page">
       <header className="explore-head">
         <h1>{greeting(user.name)}</h1>
-        <button type="button" className="text-btn" onClick={() => go({ name: "profile" })}>
-          Edit profile
-        </button>
         <p className="meta-line">{area.name}</p>
         <p className="lede">
           {openCount} from NYC Open Data · {liveCount} live discoveries

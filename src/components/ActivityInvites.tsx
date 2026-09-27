@@ -130,6 +130,14 @@ export function ActivityInbox() {
           <button disabled={!!busy} className="btn btn-ghost" onClick={() => void act(row, "declined")}>Decline</button>
         </div> : <p className="fine">Waiting for your friend to join.</p>)}
         {row.status === "accepted" && <>
+          {!sender ? (
+            <div className="invite-acceptance-actions">
+              <button type="button" disabled={!!busy} className="btn btn-ghost btn-block" onClick={() => void act(row, "unaccept")}>
+                Undo acceptance
+              </button>
+              <p className="fine">Return this invite to pending. You can join again later.</p>
+            </div>
+          ) : <p className="fine">You sent this invitation. {row.recipient_name} can undo their acceptance from their account.</p>}
           <p className="fine">Check in within 200 feet of each stop. Both check-ins must be within 30 minutes for the bonus.</p>
           {row.stops.map(stop => {
             const reward = activityRewards([row], id).find(q => q.discoveryId === stop.quest.discoveryId);
@@ -141,7 +149,18 @@ export function ActivityInbox() {
                 <button disabled={!!busy} className="btn btn-primary btn-block" onClick={() => void act(row, "check", stop)}>{busy === row.id ? "Checking location…" : "I finished · Check in"}</button>}
             </div>;
           })}
+
         </>}
+        {row.status === "declined" && (
+          <div className="stack" style={{ marginTop: "8px" }}>
+            <p className="fine">{sender ? `${row.recipient_name} declined this invitation.` : "You declined this invitation."}</p>
+            {!sender && (
+              <button disabled={!!busy} className="btn btn-ghost btn-sm" onClick={() => void act(row, "accepted")}>
+                Re-join {row.kind}
+              </button>
+            )}
+          </div>
+        )}
       </article>;
     })}
   </section>;

@@ -11,7 +11,7 @@ import { useFeed } from "../state/FeedContext";
 import { useFriends } from "../state/FriendsContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
 
-export function ProfileScreen() {
+export function ProfileScreen({ mode = "edit" }: { mode?: "view" | "edit" }) {
   const user = useRequiredUser();
   const { back, go, logOut, saveAccount, cloudMode } = useRamble();
   const [name, setName] = useState(user.name);
@@ -95,7 +95,7 @@ export function ProfileScreen() {
         </div>
       </header>
 
-      <form className="stack account-form" onSubmit={save}>
+      {mode === "view" ? <button type="button" className="btn btn-ghost btn-block" onClick={() => go({ name: "profile", mode: "edit" })}>Edit profile</button> : <form className="stack account-form" onSubmit={save}>
         <div className="section-head">
           <h2>Edit profile</h2>
           <p>Change your photo, username, name, and bio. This stays on this device.</p>
@@ -132,7 +132,7 @@ export function ProfileScreen() {
         {error ? <p className="form-error" role="alert">{error}</p> : null}
         {savedNote ? <p className="fine" role="status">Saved on this device.</p> : null}
         <button type="submit" className="btn btn-primary btn-block">Save profile</button>
-      </form>
+      </form>}
 
       <LevelProgress quests={user.quests} />
       <div className="stats">

@@ -50,6 +50,9 @@ export function AccountMenu() {
         <div className="account-dropdown" role="menu">
           <p className="account-dropdown-name">{user.name}</p>
           {user.username ? <p className="account-dropdown-handle">@{user.username}</p> : null}
+          <button type="button" role="menuitem" onClick={() => { setOpen(false); go({ name: "profile", mode: "view" }); }}>
+            View profile
+          </button>
           <button type="button" role="menuitem" onClick={() => choose("profile")}>
             Edit profile
           </button>

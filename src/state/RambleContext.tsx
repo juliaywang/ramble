@@ -55,8 +55,9 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "activity-sync": {
       if (!state.session || !state.user || getUserId(state.user) !== action.userId) return state;
-      const quests = [...state.user.quests];
-      let changed = false;
+      const activeSharedIds = new Set(action.quests.filter(q => q.id.startsWith("shared:")).map(q => q.id));
+      const quests = state.user.quests.filter(q => !q.id.startsWith("shared:") || activeSharedIds.has(q.id));
+      let changed = quests.length !== state.user.quests.length;
       for (const reward of action.quests) {
         const index = quests.findIndex(q => q.id === reward.id);
         const prior = quests[index];

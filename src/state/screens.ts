@@ -20,7 +20,7 @@ export type Screen =
   | { name: "passport"; highlight?: PassportCategoryId }
   | { name: "friends"; view?: "friends" | "requests" | "find" }
   | { name: "friend-profile"; friendId: string }
-  | { name: "profile" }
+  | { name: "profile"; mode?: "view" | "edit" }
   | { name: "settings" }
   | { name: "info" };
 

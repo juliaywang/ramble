@@ -42,9 +42,18 @@ export async function sendInvite(input: Omit<ActivityInvite, "id" | "status" | "
 
 export function updateInvite(row: ActivityInvite, actor: string, action: string, stop?: string, now = new Date().toISOString()): ActivityInvite {
   if (actor !== row.sender_id && actor !== row.recipient_id) throw new Error("This invitation belongs to someone else.");
-  if (action === "accepted" || action === "declined") {
+  if (action === "unaccept") {
+    if (actor !== row.recipient_id) throw new Error("Only the invited friend can unaccept this invitation.");
+    if (row.status !== "accepted") throw new Error("Only an accepted invitation can be undone.");
+    return { ...row, status: "pending" };
+  }
+  if (action === "accepted") {
+    if (actor !== row.recipient_id || (row.status !== "pending" && row.status !== "declined")) throw new Error("This invitation can no longer be answered.");
+    return { ...row, status: "accepted" };
+  }
+  if (action === "declined") {
     if (actor !== row.recipient_id || row.status !== "pending") throw new Error("This invitation can no longer be answered.");
-    return { ...row, status: action };
+    return { ...row, status: "declined" };
   }
   if (action !== "check" || row.status !== "accepted" || !row.stops.some(s => s.quest.id === stop)) throw new Error("Accept the invitation before checking in.");
   const field = actor === row.sender_id ? "sender_checks" : "recipient_checks";
@@ -59,7 +68,8 @@ export async function actOnInvite(row: ActivityInvite, actor: string, action: st
   }
   const client = getSupabaseClient();
   if (client) {
-    const { error } = await client.rpc("respond_activity_invite", { invite_id: row.id, response: action, stop_id: stop?.quest.id ?? null });
+    const response = action;
+    const { error } = await client.rpc("respond_activity_invite", { invite_id: row.id, response, stop_id: stop?.quest.id ?? null });
     if (error) throw cloudError(error.message);
   } else {
     const rows = local();
@@ -71,7 +81,7 @@ export async function actOnInvite(row: ActivityInvite, actor: string, action: st
 }
 
 export function activityRewards(rows: ActivityInvite[], actor: string): SavedQuest[] {
-  return rows.filter(r => r.status === "accepted" && (r.sender_id === actor || r.recipient_id === actor)).flatMap(row =>
+  return rows.filter(r => r.sender_id === actor || r.recipient_id === actor).flatMap(row =>
     row.stops.flatMap(stop => {
       const mine = (actor === row.sender_id ? row.sender_checks : row.recipient_checks)[stop.quest.id];
       const theirs = (actor === row.sender_id ? row.recipient_checks : row.sender_checks)[stop.quest.id];
