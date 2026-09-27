@@ -7,7 +7,7 @@ import { PlaceCard, SourceBadge } from "../components/ui";
 import { greeting } from "../lib/format";
 import { draftForPlace, matchScore, rankCommunities, rankDiscoveries, rollSideQuest } from "../pipeline/agent";
 import { placeInArea } from "../pipeline/geo";
-import { locationNote, useLocation } from "../state/LocationContext";
+import { useLocation } from "../state/LocationContext";
 import { INTERESTS, type Discovery, type InterestId } from "../pipeline/types";
 import { CITY_AREAS, useArea } from "../state/AreaContext";
 import { useFeed } from "../state/FeedContext";
@@ -20,7 +20,7 @@ export function ExploreScreen() {
   const { go, acceptQuest } = useRamble();
   const feed = useFeed();
   const { area, setArea } = useArea();
-  const { origin, status, request } = useLocation();
+  const { origin, request } = useLocation();
   const [filter, setFilter] = useState<InterestId | "all">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE);
@@ -81,7 +81,6 @@ export function ExploreScreen() {
         <h1>{greeting(user.name)}</h1>
         {feed.loading && <p className="fine" role="status">Updating places…</p>}
         {!feed.loading && feed.updatedFrom === "supabase" && <p className="fine">Updated from NYC Open Data</p>}
-        {feed.notice && <p className="fine" role="status">{feed.notice}</p>}
         <p className="meta-line">{area.name}</p>
         <p className="lede">
           {openCount} from NYC Open Data · {liveCount} live discoveries
@@ -148,13 +147,6 @@ export function ExploreScreen() {
         }}
         onLocate={() => void request()}
       />
-      <p className="map-note">
-        {feed.updatedFrom === "supabase"
-          ? `Synced NYC Open Data across ${area.name}. ${locationNote(status)}`
-          : feed.updatedFrom === "live"
-          ? `Live pull from NYC Open Data across ${area.name}. ${locationNote(status)}`
-          : `Saved copy of NYC Open Data across ${area.name}. ${locationNote(status)}`}
-      </p>
 
       {featuredQuest ? (
         <div className="featured-quest-card">

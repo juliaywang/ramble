@@ -125,7 +125,7 @@ export async function fetchNeighborhoodFeed(signal?: AbortSignal): Promise<Neigh
   try {
     const synced = await loadSyncedDiscoveries(signal);
     if (synced) {
-      if (!synced.places.length) return { ...getNeighborhoodFeed(), notice: "Showing saved places. No map-ready synced discoveries are available yet. Check the sync and discoveries read permissions." };
+      if (!synced.places.length) return getNeighborhoodFeed();
       const compatible = preservePlaceIds(synced.places, getNeighborhoodFeed().places);
       return { ...assembleFeed(compatible, "supabase"), notice: synced.unmapped ? `${synced.unmapped} listings need coordinates before they can appear on the map.` : undefined };
     }
@@ -133,7 +133,7 @@ export async function fetchNeighborhoodFeed(signal?: AbortSignal): Promise<Neigh
     return live.places.length ? assembleFeed(live.places, live.live ? "live" : "snapshot") : getNeighborhoodFeed();
   } catch (error) {
     if (signal?.aborted) throw error;
-    return { ...getNeighborhoodFeed(), notice: "Showing saved places because synced discoveries could not load. Check your connection and Supabase read permissions." };
+    return getNeighborhoodFeed();
   }
 }
 
