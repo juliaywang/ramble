@@ -49,7 +49,7 @@ export const PASSPORT_CATEGORIES = [
 
 export type PassportCategoryId = (typeof PASSPORT_CATEGORIES)[number]["id"];
 
-export type DataSource = "nyc-open-data" | "live-discovery";
+export type DataSource = "nyc-open-data" | "live-discovery" | "saved-guide";
 
 /**
  * Normalized place. NYC Open Data rows and Tavily results both land here
@@ -214,4 +214,5 @@ export const STARTER_DISCOVERED_IDS = ["book-culture", "hungarian", "greenmarket
 export const SOURCE_LABEL: Record<DataSource, string> = {
   "nyc-open-data": "Verified NYC Data",
   "live-discovery": "Live Discovery",
+  "saved-guide": "Saved guide",
 };

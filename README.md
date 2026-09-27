@@ -24,14 +24,14 @@ Verified places come from NYC Open Data, across the city:
 - GreenThumb community gardens
 - Libraries, museums, and community centers
 
-The app starts from a saved copy of those rows, then refreshes each dataset in the browser. If one request fails, that dataset stays on the saved copy. Cafés, the game café, concerts, parks, and the food pantry stay in the app as **Live Discovery** until a search client exists.
+The app starts from a saved copy of those rows, then refreshes each dataset in the browser. If one request fails, that dataset stays on the saved copy. Handwritten cafés, parks, and other guide entries are labeled **Saved guide**. Live Discovery uses nearby OpenStreetMap listings.
 
 A new passport opens at **50%** (Bookstore, Café, Farmers Market). Completing a quest fills the next line: Cultural Organization, Historic Site, or Community Event.
 
 ## Pipeline
 
 ```
-NYC Open Data (live, with a saved citywide fallback) + Live Discovery fixtures
+NYC Open Data (live, with a saved citywide fallback) + OpenStreetMap nearby discovery + saved guides
   → normalize into Discovery / Community records, tagged by borough
   → agent (match, why, side quest, journey) from the borough’s starting point
   → map
@@ -93,3 +93,14 @@ With `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` configured, the frontend r
 Deploy/run `sync-nyc-data` first to populate the table, then deploy/reload the frontend. If Explore reports that it is showing saved places, check the sync results and read permissions. [supabase_discoveries_read.sql](./supabase_discoveries_read.sql) grants read access to these public NYC sources if needed; it adds no browser write policy. An empty or failed database read shows a fallback notice. Without Supabase configured, the existing direct NYC fetch remains available.
 
 Supabase source/external-ID pairs give records stable frontend IDs. Same-name nearby matches retain existing IDs for saved places and quests. Curated local entries remain available. Records without coordinates cannot appear on the map; cultural organizations will appear once geocoded. Expired or undated events are excluded. Upcoming events can be viewed, but only running events produce quests or journey stops. Source links and event schedules appear on place details.
+
+
+### Live Discovery
+
+Explore now searches OpenStreetMap through the public Overpass API after location is available. No paid API key, database migration, or extra Edge Function is required. The browser sends coordinates rounded to three decimals (roughly a city block) and searches within 1.2 km for named cafés, restaurants, book/game shops, libraries, museums, galleries, gardens, music venues, and cultural spaces. This discovers venue listings, not real-time happenings or guaranteed opening status.
+
+Results carry OSM node/way/relation IDs, real coordinates, source links, and supplied hours/descriptions. Unknown hours are explicitly marked. Private, disused, unnamed and unlocated records are rejected; duplicate node/way venues and overlaps with official NYC data are combined. Matching saved guide IDs are preserved. Real discovery content replaces handwritten guide copy for matching venues. Search results participate in the existing map, interest ranking, quest generation, journeys and passport.
+
+A rounded-location cache lasts 30 minutes in the current browser session. Previously discovered venues are saved locally so saved quests remain resolvable after reload; those entries show **Saved guide** until fetched again. The Live Discovery panel offers Refresh and clear loading, empty and failure states. Network failure never produces fake live results. The public endpoint may rate-limit or time out; retry later if this happens. This implementation does not guarantee a current venue is open.
+
+Attribution: © OpenStreetMap contributors, ODbL. Query syntax: https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL . The search provider is https://overpass-api.de/api/interpreter .

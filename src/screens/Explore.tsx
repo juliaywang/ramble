@@ -1,3 +1,4 @@
+import { LiveDiscovery } from "../components/LiveDiscovery";
 import { availableForQuest } from "../pipeline/availability";
 import { DesignIcon } from "../components/DesignIcon";
 import { useEffect, useMemo, useState } from "react";
@@ -176,14 +177,17 @@ export function ExploreScreen() {
                 setAcceptedToast({ title: featuredQuest.title, templateId: featuredQuest.templateId });
               }}
             >
-              <DesignIcon name="dice" size="sm" /> Accept quest · {featuredQuest.visitMinutes} min
+              <span className="featured-quest-accept-label">
+                <span>Accept quest</span>
+                <small>{featuredQuest.visitMinutes} min</small>
+              </span>
             </button>
             <button
               type="button"
               className="btn btn-ghost"
               onClick={() => setAvoidTemplates((prev) => [...prev, featuredQuest.templateId])}
             >
-              Roll another 🎲
+              Roll another
             </button>
           </div>
         </div>
@@ -209,6 +213,7 @@ export function ExploreScreen() {
       <div className="section-head">
         <h2>Made for your afternoon</h2>
       </div>
+      <LiveDiscovery />
       <div className="stack discovery-grid">
         {visible.length === 0 ? (
           <p className="empty">Nothing tagged with that interest in {area.name}. Choose For you to see the full map.</p>

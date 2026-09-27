@@ -66,10 +66,10 @@ describe("nyc open data snapshot", () => {
 });
 
 describe("assembled neighborhood feed", () => {
-  it("mixes open data with live discoveries and a quest for every place", () => {
+  it("mixes open data with saved guides and a quest for every place", () => {
     expect(feed.places.length).toBeGreaterThanOrEqual(15);
     expect(feed.places.some((place) => place.source === "nyc-open-data")).toBe(true);
-    expect(feed.places.some((place) => place.source === "live-discovery")).toBe(true);
+    expect(feed.places.some((place) => place.source === "saved-guide")).toBe(true);
     expect(feed.places.some((place) => place.id === "book-culture")).toBe(true);
     expect(feed.questTemplates).toHaveLength(feed.places.length);
     for (const template of feed.questTemplates) {

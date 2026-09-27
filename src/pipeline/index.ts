@@ -18,9 +18,8 @@ export type NeighborhoodFeed = {
 
 /**
  * NYC Open Data rows are normalized, then curated narrative is laid over the
- * places the prototype already knows. Cafés, parks, and live discoveries that
- * are not in these datasets stay in the feed. Tavily is still the
- * Live Discovery label — that client is the next seam.
+ * places the prototype already knows. Cafés, parks, and saved guides that
+ * are not in these datasets stay in the feed. Live Discovery is supplied separately by nearby venue search.
  */
 export function assembleFeed(openPlaces: Discovery[], updatedFrom: NeighborhoodFeed["updatedFrom"]): NeighborhoodFeed {
   const byId = new Map<string, Discovery>();
@@ -38,6 +37,7 @@ export function assembleFeed(openPlaces: Discovery[], updatedFrom: NeighborhoodF
 }
 
 function withCuratedCopy(place: Discovery): Discovery {
+  if (place.source === "live-discovery") return place;
   const curated = DISCOVERIES.find((item) => item.id === place.id);
   if (!curated) return place;
   return {
@@ -52,7 +52,7 @@ function withCuratedCopy(place: Discovery): Discovery {
   };
 }
 
-function questForPlace(place: Discovery): QuestTemplate {
+export function questForPlace(place: Discovery): QuestTemplate {
   const handcrafted = QUEST_TEMPLATES.find((template) => template.discoveryId === place.id);
   if (handcrafted) return handcrafted;
   const generated = GENERATED[place.category] ?? {

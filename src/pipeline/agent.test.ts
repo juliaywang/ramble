@@ -31,7 +31,7 @@ describe("neighborhood feed", () => {
     }
     const sources = new Set(feed.places.map((place) => place.source));
     expect(sources.has("nyc-open-data")).toBe(true);
-    expect(sources.has("live-discovery")).toBe(true);
+    expect(sources.has("saved-guide")).toBe(true);
   });
 });
 

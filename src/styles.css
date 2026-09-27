@@ -1342,13 +1342,22 @@ h2 { font-size: 20px; line-height: 1.3; }
   line-height: 1.4;
 }
 .featured-quest-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 6px;
 }
 .featured-quest-actions .btn {
-  flex: 1;
+  min-width: 0;
+  padding: 12px 10px;
+  font-size: 14px;
+  line-height: 1.3;
+  gap: 6px;
 }
+.featured-quest-actions .btn svg { flex-shrink: 0; }
+.featured-quest-accept-label { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.featured-quest-accept-label > span { white-space: nowrap; }
+.featured-quest-accept-label small { font-size: 11px; font-weight: 500; }
 
 /* Map callout actions */
 .map-callout-info {
@@ -1941,3 +1950,7 @@ input:checked + .together-friend-body .together-choice { background: #a63c69; bo
 
 .invite-acceptance-actions { margin: 14px 0 18px; }
 .invite-acceptance-actions .btn { border-color: #c78ca6; color: #96365f; background: #fff5f9; min-height: 44px; }
+.live-discovery-panel { margin: 18px 0; padding: 16px; border: 1px solid #e7cdd7; border-radius: 20px; background: #fff8fb; }
+.live-discovery-panel .section-head { margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.live-discovery-panel h2 { font-size: 18px; }
+.live-discovery-panel a { color: var(--clay-deep); }
