@@ -34,7 +34,7 @@ function useWalkPlaces() {
 
 export function QuestsScreen({ highlightId }: { highlightId?: string }) {
   const user = useRequiredUser();
-  const { go, acceptQuest } = useRamble();
+  const { go } = useRamble();
   const { origin, request } = useLocation();
   const active = user.quests.filter((quest) => quest.status === "active");
   const completed = user.quests
@@ -65,23 +65,6 @@ export function QuestsScreen({ highlightId }: { highlightId?: string }) {
         <p className="fine">{totalXp(user.quests)} exploration XP so far</p>
       </header>
 
-      {import.meta.env.DEV && (
-        <section className="why-panel">
-          <h2>Local test quest</h2>
-          <p>Visit Lewisohn Hall, then check in within 150 meters to test completion, +30 XP, and passport progress.</p>
-          <button type="button" className="btn btn-ghost btn-block" onClick={() => {
-            const existing = user.quests.find((quest) => quest.templateId === "test-lewisohn" );
-            if (existing) { go({ name: "quest", id: existing.id }); return; }
-            acceptQuest({
-              templateId: "test-lewisohn", discoveryId: "lewisohn-hall",
-              title: "Lewisohn Hall check-in test",
-              objective: "Go to Lewisohn Hall and tap I finished · Check in to verify your location and complete this test quest.",
-              visitMinutes: 5, xp: 30,
-              why: "A local test of the real location check and quest rewards at Lewisohn Hall.",
-            });
-          }}>Open Lewisohn Hall test quest</button>
-        </section>
-      )}
 
       <div className="section-head">
         <h2>Active</h2>

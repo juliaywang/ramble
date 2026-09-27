@@ -6,22 +6,6 @@ import type { Discovery } from "./types";
  */
 const MORNINGSIDE: Omit<Discovery, "borough">[] = [
   {
-    id: "lewisohn-hall",
-    name: "Lewisohn Hall",
-    category: "historic",
-    source: "live-discovery",
-    sourceDetail: "Curated Columbia campus destination",
-    lat: 40.80839,
-    lng: -73.96319,
-    address: "2970 Broadway, Columbia University, New York, NY 10027",
-    hours: "Check campus access rules before visiting.",
-    summary: "Lewisohn Hall on Columbia University's Morningside campus.",
-    about: "A campus destination near College Walk. The outdoor location can be used to test a quest check-in without entering the building.",
-    tip: "Check in outdoors for a clearer location reading.",
-    tags: ["history", "culture"],
-    passportCategory: "historic",
-  },
-  {
     id: "book-culture",
     name: "Book Culture on Broadway",
     category: "bookstore",
