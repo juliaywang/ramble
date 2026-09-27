@@ -1,3 +1,4 @@
+import { InviteFriend } from "../components/ActivityInvites";
 import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
 import { useEffect, useMemo, useState } from "react";
 import { Generating, SourceBadge, OpenInMaps } from "../components/ui";
@@ -74,6 +75,15 @@ export function JourneyScreen() {
           <p className="eyebrow">{plan.title}</p>
           <h2>{plan.kicker}</h2>
           <p>{plan.intro}</p>
+          <InviteFriend activityKey={`journey:${plan.builtAt}`} title={plan.title} kind="journey" stops={plan.stops.flatMap((stop, index) => {
+            const place = feed.places.find(p => p.id === stop.discoveryId);
+            return place ? [{ name: place.name, lat: place.lat, lng: place.lng, quest: {
+              id: `journey:${plan.builtAt}:${index}`, templateId: `journey:${plan.signature}:${index}`,
+              discoveryId: place.id, title: `Explore ${place.name}`, objective: stop.why,
+              visitMinutes: stop.dwellMinutes, xp: 40, why: stop.why,
+              status: "active" as const, acceptedAt: plan.builtAt,
+            } }] : [];
+          })} />
           {plan.repeated ? <p className="fine">This is still the strongest route for that amount of time.</p> : null}
           {plan.startLabel && plan.startLabel !== "Your location" ? (
             <p className="fine">This route was drawn from {plan.startLabel}. Build it again to start where you are.</p>
@@ -107,7 +117,7 @@ export function JourneyScreen() {
               );
             })}
           </ol>
-          <p className="fine">About {plan.totalMinutes} minutes. Side quests are what fill the passport — a journey is the route.</p>
+          <p className="fine">About {plan.totalMinutes} minutes. Invite a friend to earn 40 base XP at each shared journey stop, plus 20 extra XP when you check in together.</p>
         </article>
       ) : (
         <p className="empty">No route yet. Ninety minutes is a good first one: enough for three stops, not a march.</p>

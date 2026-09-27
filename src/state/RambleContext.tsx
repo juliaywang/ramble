@@ -1,3 +1,5 @@
+import { getUserId } from "../lib/friendsService";
+import type { SavedQuest } from "../pipeline/types";
 import type { User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabase";
 import { loadCloudAccount, saveCloudAccount } from "../lib/cloudAccount";
@@ -20,6 +22,7 @@ type State = {
 };
 
 type Action =
+  | { type: "activity-sync"; userId: string; quests: SavedQuest[] }
   | { type: "login"; user: UserAccount }
   | { type: "go"; screen: Screen }
   | { type: "replace"; screen: Screen }
@@ -50,6 +53,21 @@ function init(): State {
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case "activity-sync": {
+      if (!state.session || !state.user || getUserId(state.user) !== action.userId) return state;
+      const quests = [...state.user.quests];
+      let changed = false;
+      for (const reward of action.quests) {
+        const index = quests.findIndex(q => q.id === reward.id);
+        const prior = quests[index];
+        const next = prior ? { ...prior, status: "completed" as const, completedAt: prior.completedAt ?? reward.completedAt, teamBonus: Math.max(prior.teamBonus ?? 0, reward.teamBonus ?? 0) } : reward;
+        if (JSON.stringify(prior) === JSON.stringify(next)) continue;
+        changed = true;
+        if (index < 0) quests.push(next); else quests[index] = next;
+      }
+      if (!changed) return state;
+      return { ...state, user: { ...state.user, quests, discoveredIds: [...new Set([...state.user.discoveredIds, ...action.quests.map(q => q.discoveryId)])] } };
+    }
     case "login":
       return { ...state, user: action.user, session: true, pending: null, stack: [], screen: action.user.interests.length < 3 ? { name: "interests", mode: "edit" } : { name: "explore" } };
     case "go":
@@ -201,6 +219,7 @@ type Api = {
   logOut: () => void;
   toggleSave: (id: string) => void;
   acceptQuest: (draft: QuestDraft, navigate?: boolean) => void;
+  syncActivityQuests: (userId: string, quests: SavedQuest[]) => void;
   completeQuest: (id: string, origin?: { lat: number; lng: number } | null) => Promise<void>;
   abandonQuest: (id: string) => void;
   saveJourney: (plan: JourneyPlan) => void;
@@ -287,6 +306,7 @@ export function RambleProvider({ children }: { children: ReactNode }) {
       },
       toggleSave: (id) => dispatch({ type: "toggle-save", id }),
       acceptQuest: (draft, navigate = true) => dispatch({ type: "accept", draft, navigate }),
+      syncActivityQuests: (userId, quests) => dispatch({ type: "activity-sync", userId, quests }),
       completeQuest: async (id, origin) => {
         const quest = state.user?.quests.find((item) => item.id === id && item.status === "active");
         const destination = feed.places.find((place) => place.id === quest?.discoveryId);

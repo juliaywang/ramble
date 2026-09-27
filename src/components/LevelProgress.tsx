@@ -11,7 +11,7 @@ export function LevelProgress({ quests, details = false }: { quests: SavedQuest[
       <progress value={progress.earned} max={progress.required} aria-label="Progress toward next level" />
       <small>{progress.earned} / {progress.required} XP this level</small>
       {details && <>
-        <p className="fine">Earn the XP shown on each quest, plus 20 XP for your first completed quest at each destination. Quest milestones unlock extra XP. Past completions count too.</p>
+        <p className="fine">Earn the XP shown on each quest, plus 20 XP for your first completed quest at each destination. Quest milestones unlock extra XP. Checking in with an invited friend adds 50% of the base XP. Past completions count too.</p>
         <ul className="level-milestones">
           {MILESTONES.map(m => <li key={m.count}>
             <span>{progress.count >= m.count ? "✓ " : ""}{m.title}<small>{Math.min(progress.count, m.count)} / {m.count} quests</small></span>

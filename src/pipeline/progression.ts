@@ -25,7 +25,7 @@ export function progression(quests: SavedQuest[]) {
   const places = new Set<string>();
   let total = 0;
   let count = 0;
-  const rewards: Record<string, { base: number; destination: number; milestone: number; total: number; levelBefore: number; levelAfter: number }> = {};
+  const rewards: Record<string, { base: number; destination: number; milestone: number; team: number; total: number; levelBefore: number; levelAfter: number }> = {};
   const completed = quests.filter(q => q.status === "completed")
     .sort((a, b) => (a.completedAt ?? a.acceptedAt).localeCompare(b.completedAt ?? b.acceptedAt) || a.id.localeCompare(b.id));
   for (const quest of completed) {
@@ -36,10 +36,11 @@ export function progression(quests: SavedQuest[]) {
     const destination = places.has(quest.discoveryId) ? 0 : 20;
     places.add(quest.discoveryId);
     const milestone = MILESTONES.find(m => m.count === count)?.xp ?? 0;
-    const reward = base + destination + milestone;
+    const team = Math.min(Math.ceil(base * 0.5), Math.max(0, quest.teamBonus ?? 0));
+    const reward = base + destination + milestone + team;
     const levelBefore = levelAt(total).level;
     total += reward;
-    rewards[quest.id] = { base, destination, milestone, total: reward, levelBefore, levelAfter: levelAt(total).level };
+    rewards[quest.id] = { base, destination, milestone, team, total: reward, levelBefore, levelAfter: levelAt(total).level };
   }
   return { ...levelAt(total), count, destinations: places.size, rewards, nextMilestone: MILESTONES.find(m => m.count > count) };
 }

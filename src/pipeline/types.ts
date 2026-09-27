@@ -105,6 +105,7 @@ export type QuestDraft = {
 };
 
 export type SavedQuest = QuestDraft & {
+  teamBonus?: number;
   id: string;
   status: "active" | "completed";
   acceptedAt: string;

@@ -1,3 +1,4 @@
+import { ActivityProvider, useActivityInvites } from "./components/ActivityInvites";
 import { AccountMenu } from "./components/AccountMenu";
 import { IconBook, IconCompass, IconDice, IconPath, IconPerson } from "./components/Icons";
 import { CommunityScreen, PlaceScreen } from "./screens/Details";
@@ -39,7 +40,7 @@ export function App() {
         <RambleProvider>
           <FriendsProvider>
             <LocationProvider>
-              <Shell />
+              <ActivityProvider><Shell /></ActivityProvider>
             </LocationProvider>
           </FriendsProvider>
         </RambleProvider>
@@ -115,13 +116,15 @@ function Routes() {
 function TabBar() {
   const { screen, tab, session, user, go } = useRamble();
   const { incomingRequests } = useFriends();
+  const { rows } = useActivityInvites();
+  const activityPending = rows.filter(r => r.status === "pending" && r.recipient_id === user?.id).length;
   const current = session && user ? tabOf(screen) : null;
   return (
     <nav className="tabbar" aria-label="Primary">
       {TABS.map((item) => {
         const Icon = item.icon;
         const on = current === item.id;
-        const hasBadge = item.id === "friends" && incomingRequests.length > 0;
+        const hasBadge = item.id === "friends" && incomingRequests.length + activityPending > 0;
         return (
           <button
             key={item.id}
@@ -135,7 +138,7 @@ function TabBar() {
           >
             <span className="tab-icon">
               <Icon />
-              {hasBadge ? <span className="tab-badge" aria-label={`${incomingRequests.length} requests`} /> : null}
+              {hasBadge ? <span className="tab-badge" aria-label={`${incomingRequests.length + activityPending} requests`} /> : null}
             </span>
             {item.label}
           </button>

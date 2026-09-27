@@ -1,3 +1,4 @@
+import { InviteFriend, useActivityInvites } from "../components/ActivityInvites";
 import { progression } from "../pipeline/progression";
 import { LevelProgress } from "../components/LevelProgress";
 import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
@@ -208,7 +209,8 @@ export function QuestDetailScreen({ id }: { id: string }) {
   const [locationError, setLocationError] = useState<string | null>(null);
   const { origin, request } = useLocation();
   const user = useRequiredUser();
-  const { back, completeQuest, abandonQuest } = useRamble();
+  const { back, go, completeQuest, abandonQuest } = useRamble();
+  const { rows: invites } = useActivityInvites();
   const quest = user.quests.find((item) => item.id === id);
   const place = usePlace(quest?.discoveryId);
   if (!quest || !place) {
@@ -221,6 +223,7 @@ export function QuestDetailScreen({ id }: { id: string }) {
   }
   const walk = origin ? walkMinutes(distanceMiles(origin, place)) : null;
   const done = quest.status === "completed";
+  const shared = invites.some(r => r.activity_key === quest.id && r.status === "accepted");
 
   return (
     <section className={done ? "page" : "page page-dock quest-checkin-page"}>
@@ -248,11 +251,14 @@ export function QuestDetailScreen({ id }: { id: string }) {
         {quest.completedAt ? ` · finished ${formatWhen(quest.completedAt)}` : ""}
       </p>
       {done ? <OpenInMaps place={place} /> : (
-        <div className="dock">
+        <>
+        <InviteFriend activityKey={quest.id} title={quest.title} kind="quest" stops={[{ quest, name: place.name, lat: place.lat, lng: place.lng }]} />
+      <div className="dock">
           <OpenInMaps place={place} />
           {locationError && <button type="button" className="text-btn" disabled={checking} onClick={() => void request()}>Refresh location</button>}
           <p className="fine" role="status">{locationError ?? "Finish your quest, then check in within 200 feet of the destination to earn XP."}</p>
           <button type="button" className="btn btn-primary btn-block" disabled={checking} onClick={async () => {
+            if (shared) { go({ name: "friends" }); return; }
             if (checking) return;
             setChecking(true);
             setLocationError(null);
@@ -268,12 +274,13 @@ export function QuestDetailScreen({ id }: { id: string }) {
             catch (error) { setLocationError(error instanceof Error ? error.message : "Couldn't verify your location. Try again."); }
             finally { setChecking(false); }
           }}>
-            {checking ? "Checking your location…" : "I finished · Check in"}
+            {checking ? "Checking your location…" : shared ? "Check in with friend" : "I finished · Check in"}
           </button>
           <button type="button" className="btn btn-ghost btn-block" onClick={() => abandonQuest(quest.id)}>
             Abandon
           </button>
         </div>
+        </>
       )}
     </section>
   );
@@ -325,7 +332,7 @@ export function QuestCompleteScreen({ questId }: { questId: string }) {
         </ul>
       </article>
       <p className="fine">+{reward?.total ?? quest.xp} XP · {totalXp(user.quests)} total · {user.discoveredIds.length} places discovered</p>
-      {reward && <p className="fine">{reward.base} quest XP · {reward.destination} destination bonus · {reward.milestone} milestone bonus</p>}
+      {reward && <p className="fine">{reward.base} quest XP · {reward.destination} destination bonus · {reward.milestone} milestone bonus · {reward.team} together bonus</p>}
       {reward && reward.levelAfter > reward.levelBefore && <h2>Level up! You reached level {reward.levelAfter}.</h2>}
       <LevelProgress quests={user.quests} />
       <div className="stack">

@@ -73,3 +73,14 @@ npm run build
 With `npm run dev`, friends use browser storage instead of Supabase. Choose **Sign in / Create account**, create an account with any email-shaped address and a password of at least six characters, and select your interests. Later, choose **Sign in** with the same email and password to restore its profile, friends, requests, saved places, quests, passport, and journey. Each account retains its own identity and progress. To try requests between two accounts, create both in the same browser, send a request from one, then sign in as the other to accept it.
 
 These are local demo accounts, not server authentication. They stay in this browser at the same origin (including the localhost port); clearing site data removes them, and they do not sync across devices. Passwords are stored as salted PBKDF2 hashes. Older accounts without a password keep their existing identity and set a password on their first local sign-in.
+
+
+### Shared quests and journeys
+
+Run [supabase_activities.sql](./supabase_activities.sql) in the Supabase SQL Editor after the main setup script to enable activity invitations across accounts/devices. Deploy the updated app afterward. This migration adds a participant-only invitation table and a function for accepting, declining, and recording check-ins; it does not alter existing account data.
+
+From an active quest or generated journey, choose an accepted friend and select **Invite to join**. Each activity supports one invited friend. Both users can open **Friends → Activity invites** to view the activity; the recipient chooses **Join** or **Decline**. Invitations refresh every 15 seconds, when the window gains focus, or with **Refresh**.
+
+Each person checks in within 200 feet of the destination. Their own check-in earns base XP; both check-ins within 30 minutes award each participant an additional 50% of base XP. Shared journeys award 40 base XP plus 20 together XP per stop. Each stop must be checked in separately. Sending or accepting invitations alone does not earn XP. Duplicate check-ins retain the original timestamp and do not repeat rewards. The sender's original quest is updated rather than added again.
+
+Without Supabase configured, invitations persist in this browser's local storage; test with two local accounts in the same browser. Separate browsers/devices require Supabase. Configured cloud errors are shown rather than silently saving invitations locally. Location is verified by the app, not a server-side GPS attestation service.

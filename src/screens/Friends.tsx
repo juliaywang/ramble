@@ -1,3 +1,4 @@
+import { ActivityInbox } from "../components/ActivityInvites";
 import { useEffect, useMemo, useState } from "react";
 import { firstName } from "../lib/format";
 import { getMutualInterests, getRecommendedProfiles, getUserId, searchProfiles } from "../lib/friendsService";
@@ -67,6 +68,7 @@ export function FriendsScreen({ initialView = "friends" }: { initialView?: "frie
       <header className="page-head">
         <p className="eyebrow">Community</p>
         <h1>Friends</h1>
+      <ActivityInbox />
         <p className="lede">Find fellow explorers, share quests, and ramble together.</p>
       </header>
 
