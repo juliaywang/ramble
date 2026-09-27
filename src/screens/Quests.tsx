@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BackRow, Generating, OpenInMaps, PlaceMedia, SourceBadge } from "../components/ui";
 import { durationLabel, formatWhen } from "../lib/format";
 import { motionDelay } from "../lib/motion";
+import { rememberLocation } from "../lib/questLocation";
 import { passportLabel, passportPercent, passportRows, rollSideQuest, stampIsNew, totalXp } from "../pipeline/agent";
 import { distanceMiles, formatDistance, walkMinutes, withinWalk } from "../pipeline/geo";
 import { NEIGHBORHOOD } from "../pipeline/types";
@@ -203,7 +204,7 @@ export function QuestOfferScreen() {
 export function QuestDetailScreen({ id }: { id: string }) {
   const [checking, setChecking] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const { origin, accuracy, request } = useLocation();
+  const { origin, request } = useLocation();
   const user = useRequiredUser();
   const { back, completeQuest, abandonQuest } = useRamble();
   const quest = user.quests.find((item) => item.id === id);
@@ -247,14 +248,21 @@ export function QuestDetailScreen({ id }: { id: string }) {
       {done ? <OpenInMaps place={place} /> : (
         <div className="dock">
           <OpenInMaps place={place} />
-          <p className="fine">{accuracy !== null ? `Device location accuracy: ±${Math.round(accuracy)} m. Check-in requires 100 m or better.` : "Waiting for a device location reading."}</p>
           {locationError && <button type="button" className="text-btn" disabled={checking} onClick={() => void request()}>Refresh location</button>}
-          <p className="fine" role="status">{locationError ?? "Finish your quest, then check in within 150 meters of the destination to earn XP."}</p>
+          <p className="fine" role="status">{locationError ?? "Finish your quest, then check in within 200 feet of the destination to earn XP."}</p>
           <button type="button" className="btn btn-primary btn-block" disabled={checking} onClick={async () => {
             if (checking) return;
             setChecking(true);
             setLocationError(null);
-            try { await completeQuest(quest.id); }
+            try {
+              if (origin) {
+                rememberLocation({
+                  coords: { latitude: origin.lat, longitude: origin.lng, accuracy: 10 },
+                  timestamp: Date.now(),
+                } as GeolocationPosition);
+              }
+              await completeQuest(quest.id, origin);
+            }
             catch (error) { setLocationError(error instanceof Error ? error.message : "Couldn't verify your location. Try again."); }
             finally { setChecking(false); }
           }}>

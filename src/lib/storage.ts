@@ -20,6 +20,7 @@ export function loadPersisted(): Persisted {
           photo: parsed.user.photo ?? null,
           bio: parsed.user.bio ?? "",
           username: normalizeUsername(parsed.user.username || "") || usernameFromName(parsed.user.name ?? ""),
+          quests: (parsed.user.quests ?? []).filter((q) => !q.templateId?.startsWith("test-")),
         }
       : null;
     return { user, session: Boolean(parsed.session && user) };

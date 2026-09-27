@@ -66,11 +66,13 @@ export async function loadCloudAccount(auth: User): Promise<UserAccount> {
       .maybeSingle();
 
     if (!error && data?.data) {
+      const rawUser = data.data as Partial<UserAccount>;
       const user: UserAccount = {
         ...newCloudAccount(auth),
-        ...data.data,
+        ...rawUser,
         id: auth.id,
-        email: auth.email ?? (data.data as Partial<UserAccount>).email ?? "",
+        email: auth.email ?? rawUser.email ?? "",
+        quests: (rawUser.quests ?? []).filter((q) => !q.templateId?.startsWith("test-")),
       };
       savePersisted({ user, session: true });
       return user;

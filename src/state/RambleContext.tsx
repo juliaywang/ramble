@@ -201,7 +201,7 @@ type Api = {
   logOut: () => void;
   toggleSave: (id: string) => void;
   acceptQuest: (draft: QuestDraft, navigate?: boolean) => void;
-  completeQuest: (id: string) => Promise<void>;
+  completeQuest: (id: string, origin?: { lat: number; lng: number } | null) => Promise<void>;
   abandonQuest: (id: string) => void;
   saveJourney: (plan: JourneyPlan) => void;
   saveAccount: (account: { name: string; email: string; username: string; bio: string; photo: string | null }) => void;
@@ -287,11 +287,11 @@ export function RambleProvider({ children }: { children: ReactNode }) {
       },
       toggleSave: (id) => dispatch({ type: "toggle-save", id }),
       acceptQuest: (draft, navigate = true) => dispatch({ type: "accept", draft, navigate }),
-      completeQuest: async (id) => {
+      completeQuest: async (id, origin) => {
         const quest = state.user?.quests.find((item) => item.id === id && item.status === "active");
         const destination = feed.places.find((place) => place.id === quest?.discoveryId);
         if (!state.session || !quest || !destination) throw new Error("This quest is no longer available to complete.");
-        await verifyQuestLocation(destination);
+        await verifyQuestLocation(destination, origin);
         dispatch({ type: "complete", id, userId: state.user?.id });
       },
       abandonQuest: (id) => dispatch({ type: "abandon", id }),
