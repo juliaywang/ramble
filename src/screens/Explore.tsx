@@ -52,8 +52,6 @@ export function ExploreScreen() {
   const people = useMemo(() => rankCommunities(user, feed.communities).slice(0, 6), [user, feed.communities]);
   const visible = ranked.filter((place) => filter === "all" || place.tags.includes(filter));
   const page = visible.slice(0, shown);
-  const openCount = inArea.filter((place) => place.source === "nyc-open-data").length;
-  const liveCount = inArea.filter((place) => place.source === "live-discovery").length;
   const active = user.quests.find((quest) => quest.status === "active");
   const featuredQuest = useMemo(() => {
     if (active) return null;
@@ -82,9 +80,6 @@ export function ExploreScreen() {
         {feed.loading && <p className="fine" role="status">Updating places…</p>}
         {!feed.loading && feed.updatedFrom === "supabase" && <p className="fine">Updated from NYC Open Data</p>}
         <p className="meta-line">{area.name}</p>
-        <p className="lede">
-          {openCount} from NYC Open Data · {liveCount} live discoveries
-        </p>
       </header>
 
       {active ? (

@@ -21,7 +21,6 @@ export function WelcomeScreen() {
           <div className="welcome-actions">
             {user ? <button type="button" className="btn btn-primary" onClick={continueSession}>Continue as {firstName(user.name)} <DesignIcon name="arrow" /></button> : null}
             <button type="button" className={user ? "btn btn-ghost" : "btn btn-primary"} onClick={() => go({ name: "signup" })}>Sign in / Create account <DesignIcon name="arrow" /></button>
-            <p className="fine">{user ? "Accounts and progress are saved separately in this browser." : "Free to explore. No credit card needed."}</p>
           </div>
         </div>
         <p className="fine">Built for curious New Yorkers.</p>

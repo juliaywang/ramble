@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#13293d" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <g transform="rotate(-6 256 256)" filter="url(#shadow)">
+    <rect x="64" y="64" width="384" height="384" rx="128" fill="#13293d"/>
+    <g transform="translate(64, 64) scale(16)">
+      <path d="M6 17c2.5-4 3-7 6.5-7S15 13 18 8" stroke="#a9bea7" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+      <circle cx="6" cy="17" r="1.7" fill="#a9bea7"/>
+      <circle cx="18" cy="8" r="1.7" fill="#a9bea7"/>
+    </g>
+  </g>
+</svg>
