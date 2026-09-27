@@ -137,3 +137,22 @@ on conflict (id) do update set
   discovered_ids = excluded.discovered_ids,
   quests_count = excluded.quests_count,
   passport_percent = excluded.passport_percent;
+
+-- ==============================================================================
+-- 7. ACCOUNT STATE TABLE (OPTIONAL CLOUD PROGRESS BACKUP)
+-- Stores complete JSON snapshots of user quests, saves, and journeys
+-- ==============================================================================
+create table if not exists public.account_state (
+  user_id text primary key,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz default timezone('utc'::text, now()) not null
+);
+
+alter table public.account_state enable row level security;
+
+drop policy if exists "Account state is manageable by anyone" on public.account_state;
+create policy "Account state is manageable by anyone"
+  on public.account_state for all
+  using (true)
+  with check (true);
+

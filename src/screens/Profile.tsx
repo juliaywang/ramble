@@ -11,7 +11,7 @@ import { useRamble, useRequiredUser } from "../state/RambleContext";
 
 export function ProfileScreen() {
   const user = useRequiredUser();
-  const { back, go, logOut, saveAccount } = useRamble();
+  const { back, go, logOut, saveAccount, cloudMode } = useRamble();
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username || usernameFromName(user.name));
   const [email, setEmail] = useState(user.email);
@@ -112,7 +112,7 @@ export function ProfileScreen() {
         </label>
         <label className="field">
           Email
-          <input value={email} onChange={(event) => { setEmail(event.target.value); setSavedNote(false); }} autoComplete="email" inputMode="email" />
+          <input disabled={cloudMode} title={cloudMode ? "Your email is managed by Supabase Auth" : undefined} value={email} onChange={(event) => { setEmail(event.target.value); setSavedNote(false); }} autoComplete="email" inputMode="email" />
         </label>
         <label className="field">
           Bio

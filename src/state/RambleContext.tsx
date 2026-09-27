@@ -1,4 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
+import { getSupabaseClient } from "../lib/supabase";
+import { loadCloudAccount, saveCloudAccount } from "../lib/cloudAccount";
+import { verifyQuestLocation } from "../lib/questLocation";
+import { useFeed } from "./FeedContext";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { loadPersisted, savePersisted } from "../lib/storage";
 import { usernameFromName } from "../lib/format";
 import { STARTER_DISCOVERED_IDS, type InterestId, type JourneyPlan, type QuestDraft, type UserAccount } from "../pipeline/types";
@@ -27,13 +32,13 @@ type Action =
   | { type: "logout" }
   | { type: "toggle-save"; id: string }
   | { type: "accept"; draft: QuestDraft }
-  | { type: "complete"; id: string }
+  | { type: "complete"; id: string; userId: string | undefined }
   | { type: "abandon"; id: string }
   | { type: "journey"; plan: JourneyPlan }
   | { type: "account"; name: string; email: string; username: string; bio: string; photo: string | null };
 
 function init(): State {
-  const saved = loadPersisted();
+  const saved = getSupabaseClient() ? { user: null, session: false } : loadPersisted();
   return {
     user: saved.user,
     session: saved.session,
@@ -46,7 +51,7 @@ function init(): State {
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "login":
-      return { ...state, user: action.user, session: true, pending: null, stack: [], screen: { name: "explore" } };
+      return { ...state, user: action.user, session: true, pending: null, stack: [], screen: action.user.interests.length < 3 ? { name: "interests", mode: "edit" } : { name: "explore" } };
     case "go":
       return { ...state, stack: [...state.stack, state.screen], screen: action.screen };
     case "replace":
@@ -91,7 +96,7 @@ function reducer(state: State, action: Action): State {
       if (!state.user) return state;
       return { ...state, session: true, stack: [], screen: { name: "explore" } };
     case "logout":
-      return { ...state, session: false, stack: [], screen: { name: "welcome" }, pending: null };
+      return { ...state, user: getSupabaseClient() ? null : state.user, session: false, stack: [], screen: { name: "welcome" }, pending: null };
     case "toggle-save": {
       if (!state.user) return state;
       const saved = new Set(state.user.savedIds);
@@ -120,7 +125,7 @@ function reducer(state: State, action: Action): State {
       };
     }
     case "complete": {
-      if (!state.user) return state;
+      if (!state.session || !state.user || state.user.id !== action.userId || !state.user.quests.some((quest) => quest.id === action.id && quest.status === "active")) return state;
       const quests = state.user.quests.map((quest) =>
         quest.id === action.id
           ? { ...quest, status: "completed" as const, completedAt: new Date().toISOString() }
@@ -173,6 +178,10 @@ function reducer(state: State, action: Action): State {
 }
 
 type Api = {
+  cloudMode: boolean;
+  authLoading: boolean;
+  syncError: string | null;
+  retrySync: () => void;
   user: UserAccount | null;
   session: boolean;
   pending: Pending | null;
@@ -189,7 +198,7 @@ type Api = {
   logOut: () => void;
   toggleSave: (id: string) => void;
   acceptQuest: (draft: QuestDraft) => void;
-  completeQuest: (id: string) => void;
+  completeQuest: (id: string) => Promise<void>;
   abandonQuest: (id: string) => void;
   saveJourney: (plan: JourneyPlan) => void;
   saveAccount: (account: { name: string; email: string; username: string; bio: string; photo: string | null }) => void;
@@ -198,14 +207,53 @@ type Api = {
 const RambleContext = createContext<Api | null>(null);
 
 export function RambleProvider({ children }: { children: ReactNode }) {
+  const feed = useFeed();
   const [state, dispatch] = useReducer(reducer, undefined, init);
 
+  const client = getSupabaseClient();
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(Boolean(client));
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
+  const loadedId = useRef<string | null>(null);
+  const saves = useRef<Promise<void>>(Promise.resolve());
+
   useEffect(() => {
-    savePersisted({ user: state.user, session: state.session });
-  }, [state.user, state.session]);
+    if (!client) return;
+    const { data } = client.auth.onAuthStateChange((_event, session) => {
+      setAuthUser((current) => current?.id === session?.user.id && current?.email === session?.user.email ? current : session?.user ?? null);
+      if (!session) { loadedId.current = null; dispatch({ type: "logout" }); setAuthLoading(false); }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [client]);
+
+  useEffect(() => {
+    if (!authUser || !client || loadedId.current === authUser.id) return;
+    let cancelled = false;
+    setAuthLoading(true);
+    setSyncError(null);
+    void loadCloudAccount(authUser).then((user) => {
+      if (cancelled) return;
+      loadedId.current = user.id!;
+      dispatch({ type: "login", user });
+    }).catch((error: Error) => { if (!cancelled) setSyncError(error.message); })
+      .finally(() => { if (!cancelled) setAuthLoading(false); });
+    return () => { cancelled = true; };
+  }, [authUser, client, retry]);
+
+  useEffect(() => {
+    if (!client) { savePersisted({ user: state.user, session: state.session }); return; }
+    const user = state.user;
+    if (!state.session || !user || user.id !== authUser?.id || loadedId.current !== user.id) return;
+    // Serialize snapshots so a slow earlier request cannot overwrite later progress.
+    saves.current = saves.current.catch(() => {}).then(() => saveCloudAccount(user));
+    void saves.current.then(() => setSyncError(null)).catch((error: Error) => setSyncError(`Progress hasn't synced: ${error.message}`));
+  }, [state.user, state.session, client, authUser?.id, retry]);
 
   const api = useMemo<Api>(
     () => ({
+      cloudMode: Boolean(client),
+      authLoading, syncError, retrySync: () => setRetry((value) => value + 1),
       user: state.user,
       session: state.session,
       pending: state.pending,
@@ -214,7 +262,7 @@ export function RambleProvider({ children }: { children: ReactNode }) {
       replace: (screen) => dispatch({ type: "replace", screen }),
       tab: (screen) => dispatch({ type: "tab", screen }),
       back: () => dispatch({ type: "back" }),
-      loginLocal: (user) => dispatch({ type: "login", user }),
+      loginLocal: (user) => { if (!client) dispatch({ type: "login", user }); },
       beginSignup: (pending) => dispatch({ type: "pending", pending }),
       finishSignup: (interests) =>
         dispatch({
@@ -224,16 +272,29 @@ export function RambleProvider({ children }: { children: ReactNode }) {
           interests,
         }),
       saveInterests: (interests) => dispatch({ type: "interests", interests }),
-      continueSession: () => dispatch({ type: "continue" }),
-      logOut: () => dispatch({ type: "logout" }),
+      continueSession: () => { if (!client) dispatch({ type: "continue" }); },
+      logOut: () => {
+        if (!client) { dispatch({ type: "logout" }); return; }
+        void saves.current.then(async () => {
+          const { error } = await client.auth.signOut();
+          if (error) throw error;
+          dispatch({ type: "logout" });
+        }).catch((error: Error) => setSyncError(`Couldn't sign out: ${error.message}`));
+      },
       toggleSave: (id) => dispatch({ type: "toggle-save", id }),
       acceptQuest: (draft) => dispatch({ type: "accept", draft }),
-      completeQuest: (id) => dispatch({ type: "complete", id }),
+      completeQuest: async (id) => {
+        const quest = state.user?.quests.find((item) => item.id === id && item.status === "active");
+        const destination = feed.places.find((place) => place.id === quest?.discoveryId);
+        if (!state.session || !quest || !destination) throw new Error("This quest is no longer available to complete.");
+        await verifyQuestLocation(destination);
+        dispatch({ type: "complete", id, userId: state.user?.id });
+      },
       abandonQuest: (id) => dispatch({ type: "abandon", id }),
       saveJourney: (plan) => dispatch({ type: "journey", plan }),
-      saveAccount: (account) => dispatch({ type: "account", ...account }),
+      saveAccount: (account) => dispatch({ type: "account", ...account, email: client ? state.user?.email ?? account.email : account.email }),
     }),
-    [state.pending, state.screen, state.session, state.user],
+    [state.pending, state.screen, state.session, state.user, feed.places, client, authLoading, syncError],
   );
 
   return <RambleContext.Provider value={api}>{children}</RambleContext.Provider>;

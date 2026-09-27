@@ -49,13 +49,14 @@ export function App() {
 }
 
 function Shell() {
-  const { screen, session, user } = useRamble();
+  const { screen, session, user, authLoading, syncError, retrySync } = useRamble();
   const signedIn = Boolean(session && user);
   return (
     <div className={signedIn ? "app-shell has-nav has-account" : "app-shell has-nav"}>
       {signedIn ? <AccountMenu /> : null}
       <div key={screenKey(screen)} className="screen">
-        <Routes />
+        {syncError && <div className="empty" role="alert">{syncError} <button type="button" className="text-btn" onClick={retrySync}>Retry</button></div>}
+        {authLoading ? <p className="page" role="status">Loading your account…</p> : <Routes />}
       </div>
       <TabBar />
     </div>

@@ -26,12 +26,11 @@ export function normalizeSupabaseUrl(input: string): string {
   return val.replace(/\/+$/, "");
 }
 
-export const DEFAULT_SUPABASE_URL = "https://rruacvhxatjfufcfsxco.supabase.co";
-export const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_alGnFdOqfxJzkeI9Z4izTg_kqB6PBOA";
-
 export function getSupabaseConfig(): SupabaseConfig {
-  if (import.meta.env.DEV && import.meta.env.MODE !== "test") {
-    return { url: "", anonKey: "", isConfigured: false, source: "none" };
+  if (import.meta.env.MODE !== "test") {
+    const url = import.meta.env.VITE_SUPABASE_URL?.trim();
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+    if (url && anonKey && !url.includes("your-project")) return { url: normalizeSupabaseUrl(url), anonKey, isConfigured: true, source: "env" };
   }
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
@@ -68,25 +67,7 @@ export function getSupabaseConfig(): SupabaseConfig {
     };
   }
 
-  const rawEnvUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
-  const envKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
-  const envUrl = rawEnvUrl ? normalizeSupabaseUrl(rawEnvUrl) : "";
-
-  if (envUrl && envKey && !envUrl.includes("your-project.supabase.co")) {
-    return {
-      url: envUrl,
-      anonKey: envKey,
-      isConfigured: true,
-      source: "env",
-    };
-  }
-
-  return {
-    url: DEFAULT_SUPABASE_URL,
-    anonKey: DEFAULT_SUPABASE_ANON_KEY,
-    isConfigured: true,
-    source: "env",
-  };
+  return { url: "", anonKey: "", isConfigured: false, source: "none" };
 }
 
 export function saveCustomSupabaseConfig(urlOrProjectId: string, anonKey: string): void {
@@ -121,7 +102,9 @@ export function getSupabaseClient(): SupabaseClient | null {
   try {
     cachedClient = createClient(config.url, config.anonKey, {
       auth: {
-        persistSession: false,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
     });
     lastClientKey = clientKey;

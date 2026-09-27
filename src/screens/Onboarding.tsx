@@ -1,3 +1,4 @@
+import { getSupabaseClient } from "../lib/supabase";
 import { authenticateLocal } from "../lib/storage";
 import { Brand } from "../components/Brand";
 import { DesignIcon } from "../components/DesignIcon";
@@ -47,6 +48,7 @@ export function SignupScreen() {
   const [name, setName] = useState(pending?.name ?? "");
   const [email, setEmail] = useState(pending?.email ?? "");
   const [password, setPassword] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(event: FormEvent) {
@@ -67,6 +69,15 @@ export function SignupScreen() {
     setError(null);
     setBusy(true);
     try {
+      const client = getSupabaseClient();
+      if (client) {
+        const result = mode === "create"
+          ? await client.auth.signUp({ email: email.trim(), password, options: { data: { name: trimmed }, emailRedirectTo: window.location.origin } })
+          : await client.auth.signInWithPassword({ email: email.trim(), password });
+        if (result.error) throw result.error;
+        if (!result.data.session) setNotice("Check your email to confirm your account, then sign in.");
+        return;
+      }
       const existing = await authenticateLocal(email, password, mode === "create");
       if (existing) loginLocal(existing);
       else beginSignup({ name: trimmed, email: email.trim() });
@@ -83,7 +94,7 @@ export function SignupScreen() {
       <p className="eyebrow">Account</p>
       <h1>{mode === "login" ? "Welcome back." : "Make a passport."}</h1>
       <p className="lede">
-        Use any email for this local demo. Sign in again to restore your friends, saved places, and progress in this browser.
+        {getSupabaseClient() ? "Sign in to restore your friends and progress across devices." : "Use any email for this local demo. Your accounts stay in this browser."}
       </p>
       <div className="chips">
         <button type="button" className="chip" aria-pressed={mode === "login"} disabled={busy} onClick={() => { setMode("login"); setError(null); }}>Sign in</button>
@@ -115,6 +126,7 @@ export function SignupScreen() {
             placeholder="At least 6 characters"
           />
         </label>
+        {notice && <p role="status">{notice}</p>}
         {error ? <p className="form-error">{error}</p> : null}
         <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
           {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Choose interests"}

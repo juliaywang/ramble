@@ -1,3 +1,4 @@
+import { rememberLocation } from "../lib/questLocation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { inCity, type WalkStart } from "../pipeline/geo";
 import { useRamble } from "./RambleContext";
@@ -8,6 +9,8 @@ type LocationValue = {
   origin: WalkStart | null;
   status: LocationStatus;
   usingGps: boolean;
+  accuracy: number | null;
+  recordedAt: number | null;
   request: () => Promise<WalkStart | null>;
 };
 
@@ -23,6 +26,7 @@ function toStart(fix: { lat: number; lng: number }): WalkStart {
 
 export function LocationProvider({ children }: { children: ReactNode }) {
   const { session } = useRamble();
+  const [reading, setReading] = useState<GeolocationPosition | null>(null);
   const [fix, setFix] = useState<{ lat: number; lng: number } | null>(null);
   const [status, setStatus] = useState<LocationStatus>("locating");
 
@@ -49,6 +53,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         throw error;
       })
       .then((position) => {
+        rememberLocation(position);
+        setReading(position);
         const next = { lat: position.coords.latitude, lng: position.coords.longitude };
         if (!Number.isFinite(next.lat) || !Number.isFinite(next.lng) || (next.lat === 0 && next.lng === 0)) {
           setFix(null);
@@ -65,6 +71,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         return toStart(next);
       })
       .catch((error: GeolocationPositionError) => {
+        if (error.code === error.PERMISSION_DENIED) rememberLocation(null);
         setFix(null);
         setStatus(error.code === error.PERMISSION_DENIED ? "denied" : "unavailable");
         return null;
@@ -73,6 +80,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!session) {
+      rememberLocation(null);
+      setReading(null);
       setFix(null);
       setStatus("unavailable");
       return;
@@ -84,6 +93,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     if (status !== "ready" || !navigator.geolocation) return;
     const watch = navigator.geolocation.watchPosition(
       (position) => {
+        rememberLocation(position);
+        setReading(position);
         const next = { lat: position.coords.latitude, lng: position.coords.longitude };
         if (!inCity(next.lat, next.lng)) return;
         setFix((current) => (sameFix(current, next) ? current : next));
@@ -96,10 +107,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<LocationValue>(() => {
     if (fix && status === "ready") {
-      return { origin: toStart(fix), status, usingGps: true, request };
+      return { origin: toStart(fix), status, usingGps: true, accuracy: reading?.coords.accuracy ?? null, recordedAt: reading?.timestamp ?? null, request };
     }
-    return { origin: null, status, usingGps: false, request };
-  }, [fix, request, status]);
+    return { origin: null, status, usingGps: false, accuracy: null, recordedAt: null, request };
+  }, [fix, request, status, reading]);
 
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
 }

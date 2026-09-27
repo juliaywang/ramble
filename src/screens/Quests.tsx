@@ -1,5 +1,5 @@
 import { DesignIcon, categoryIcons, categoryColors } from "../components/DesignIcon";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BackRow, Generating, OpenInMaps, PlaceMedia, SourceBadge } from "../components/ui";
 import { durationLabel, formatWhen } from "../lib/format";
 import { motionDelay } from "../lib/motion";
@@ -34,7 +34,7 @@ function useWalkPlaces() {
 
 export function QuestsScreen({ highlightId }: { highlightId?: string }) {
   const user = useRequiredUser();
-  const { go } = useRamble();
+  const { go, acceptQuest } = useRamble();
   const { origin, request } = useLocation();
   const active = user.quests.filter((quest) => quest.status === "active");
   const completed = user.quests
@@ -64,6 +64,24 @@ export function QuestsScreen({ highlightId }: { highlightId?: string }) {
         </button>
         <p className="fine">{totalXp(user.quests)} exploration XP so far</p>
       </header>
+
+      {import.meta.env.DEV && (
+        <section className="why-panel">
+          <h2>Local test quest</h2>
+          <p>Visit Lewisohn Hall, then check in within 150 meters to test completion, +30 XP, and passport progress.</p>
+          <button type="button" className="btn btn-ghost btn-block" onClick={() => {
+            const existing = user.quests.find((quest) => quest.templateId === "test-lewisohn" );
+            if (existing) { go({ name: "quest", id: existing.id }); return; }
+            acceptQuest({
+              templateId: "test-lewisohn", discoveryId: "lewisohn-hall",
+              title: "Lewisohn Hall check-in test",
+              objective: "Go to Lewisohn Hall and tap I finished · Check in to verify your location and complete this test quest.",
+              visitMinutes: 5, xp: 30,
+              why: "A local test of the real location check and quest rewards at Lewisohn Hall.",
+            });
+          }}>Open Lewisohn Hall test quest</button>
+        </section>
+      )}
 
       <div className="section-head">
         <h2>Active</h2>
@@ -200,6 +218,9 @@ export function QuestOfferScreen() {
 }
 
 export function QuestDetailScreen({ id }: { id: string }) {
+  const [checking, setChecking] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const { origin, accuracy, request } = useLocation();
   const user = useRequiredUser();
   const { back, completeQuest, abandonQuest } = useRamble();
   const quest = user.quests.find((item) => item.id === id);
@@ -212,12 +233,11 @@ export function QuestDetailScreen({ id }: { id: string }) {
       </section>
     );
   }
-  const { origin } = useLocation();
   const walk = origin ? walkMinutes(distanceMiles(origin, place)) : null;
   const done = quest.status === "completed";
 
   return (
-    <section className={done ? "page" : "page page-dock"}>
+    <section className={done ? "page" : "page page-dock quest-checkin-page"}>
       <BackRow onBack={back} label="Quests" />
       <p className="eyebrow">{done ? "Completed" : "Active quest"}</p>
       <h1>{quest.title}</h1>
@@ -244,8 +264,18 @@ export function QuestDetailScreen({ id }: { id: string }) {
       {done ? <OpenInMaps place={place} /> : (
         <div className="dock">
           <OpenInMaps place={place} />
-          <button type="button" className="btn btn-primary btn-block" onClick={() => completeQuest(quest.id)}>
-            Complete quest
+          <p className="fine">{accuracy !== null ? `Device location accuracy: ±${Math.round(accuracy)} m. Check-in requires 100 m or better.` : "Waiting for a device location reading."}</p>
+          {locationError && <button type="button" className="text-btn" disabled={checking} onClick={() => void request()}>Refresh location</button>}
+          <p className="fine" role="status">{locationError ?? "Finish your quest, then check in within 150 meters of the destination to earn XP."}</p>
+          <button type="button" className="btn btn-primary btn-block" disabled={checking} onClick={async () => {
+            if (checking) return;
+            setChecking(true);
+            setLocationError(null);
+            try { await completeQuest(quest.id); }
+            catch (error) { setLocationError(error instanceof Error ? error.message : "Couldn't verify your location. Try again."); }
+            finally { setChecking(false); }
+          }}>
+            {checking ? "Checking your location…" : "I finished · Check in"}
           </button>
           <button type="button" className="btn btn-ghost btn-block" onClick={() => abandonQuest(quest.id)}>
             Abandon
