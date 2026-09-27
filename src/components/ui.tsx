@@ -1,7 +1,7 @@
 import { DesignIcon, categoryIcons, categoryColors } from "./DesignIcon";
 import { useEffect, useState } from "react";
 import { boroughName } from "../pipeline/geo";
-import { CATEGORIES, SOURCE_LABEL, type DataSource, type Discovery, type RankedDiscovery } from "../pipeline/types";
+import { CATEGORIES, SOURCE_LABEL, type DataSource, type Discovery, type QuestTemplate, type RankedDiscovery } from "../pipeline/types";
 import { formatDistance } from "../pipeline/geo";
 import { IconBack } from "./Icons";
 
@@ -48,7 +48,12 @@ export function PlaceCard({
   highlighted = false,
   showBorough = false,
   awaitingLocation = false,
+  quest,
+  questState,
+  activeQuestId,
   onOpen,
+  onAcceptQuest,
+  onViewQuest,
 }: {
   place: RankedDiscovery;
   logged?: boolean;
@@ -56,7 +61,12 @@ export function PlaceCard({
   highlighted?: boolean;
   showBorough?: boolean;
   awaitingLocation?: boolean;
+  quest?: QuestTemplate | null;
+  questState?: "active" | "completed" | "available";
+  activeQuestId?: string;
   onOpen: () => void;
+  onAcceptQuest?: () => void;
+  onViewQuest?: (questId: string) => void;
 }) {
   const meta = CATEGORIES[place.category];
   const className = ["card", "place-card", selected ? "is-selected" : "", highlighted ? "is-highlight" : ""]
@@ -77,6 +87,15 @@ export function PlaceCard({
             {awaitingLocation ? "" : ` · ${formatDistance(place.miles)} · ${place.minutes} min walk`}
           </p>
           <p className="why clamp-3">{place.why}</p>
+          {quest ? (
+            <div className="place-card-quest">
+              <span className="quest-pill">
+                <DesignIcon name="dice" size="sm" /> Quest
+              </span>
+              <span className="quest-pill-title clamp-1">{quest.title}</span>
+              <span className="quest-pill-xp">+{quest.xp} XP</span>
+            </div>
+          ) : null}
           <div className="badge-row">
             <SourceBadge source={place.source} />
             {logged ? <span className="logged">In your log</span> : null}
@@ -85,6 +104,36 @@ export function PlaceCard({
       </button>
       <div className="place-card-actions">
         <OpenInMaps place={place} />
+        {questState === "active" && activeQuestId ? (
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost place-quest-btn is-active"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewQuest?.(activeQuestId);
+            }}
+          >
+            <DesignIcon name="dice" size="sm" />
+            Active quest
+          </button>
+        ) : questState === "completed" ? (
+          <span className="place-quest-done">
+            <DesignIcon name="check" size="sm" />
+            Quest done
+          </span>
+        ) : onAcceptQuest ? (
+          <button
+            type="button"
+            className="btn btn-sm btn-clay place-quest-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAcceptQuest();
+            }}
+          >
+            <DesignIcon name="dice" size="sm" />
+            Accept quest
+          </button>
+        ) : null}
       </div>
     </article>
   );

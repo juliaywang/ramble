@@ -79,6 +79,33 @@ export function explainQuest(person: Person, place: Discovery, places: Discovery
   return `${source}, ${minutes} minutes from ${origin.label}. ${interestLine} ${gapLine}`;
 }
 
+export function draftForPlace(
+  person: Person,
+  place: Discovery,
+  templates: QuestTemplate[],
+  places: Discovery[],
+  origin: WalkStart = ANCHOR,
+): QuestDraft {
+  const template = templates.find((t) => t.discoveryId === place.id) ?? {
+    id: `quest-${place.id}`,
+    discoveryId: place.id,
+    title: `Stop at ${place.name}`,
+    objective: `Visit ${place.name} and learn one thing you could not have learned from the sidewalk.`,
+    visitMinutes: 20,
+    xp: 35,
+  };
+  return {
+    templateId: template.id,
+    discoveryId: place.id,
+    title: template.title,
+    objective: template.objective,
+    visitMinutes: template.visitMinutes,
+    xp: template.xp,
+    why: explainQuest(person, place, places, origin),
+  };
+}
+
+
 export function rankDiscoveries(person: Person, places: Discovery[], origin: WalkStart = ANCHOR): RankedDiscovery[] {
   const scored = places.map((place) => {
     const miles = distanceMiles(origin, place);

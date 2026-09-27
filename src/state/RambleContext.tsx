@@ -31,7 +31,7 @@ type Action =
   | { type: "continue" }
   | { type: "logout" }
   | { type: "toggle-save"; id: string }
-  | { type: "accept"; draft: QuestDraft }
+  | { type: "accept"; draft: QuestDraft; navigate?: boolean }
   | { type: "complete"; id: string; userId: string | undefined }
   | { type: "abandon"; id: string }
   | { type: "journey"; plan: JourneyPlan }
@@ -106,10 +106,12 @@ function reducer(state: State, action: Action): State {
     }
     case "accept": {
       if (!state.user) return state;
+      const shouldNavigate = action.navigate ?? true;
       if (state.user.quests.some((quest) => quest.templateId === action.draft.templateId && quest.status !== "completed")) {
         const existing = state.user.quests.find((quest) => quest.templateId === action.draft.templateId);
+        if (!shouldNavigate) return state;
         return existing
-          ? { ...state, screen: { name: "quest", id: existing.id } }
+          ? { ...state, stack: [...state.stack, state.screen], screen: { name: "quest", id: existing.id } }
           : state;
       }
       const quest = {
@@ -121,7 +123,8 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         user: { ...state.user, quests: [quest, ...state.user.quests] },
-        screen: { name: "quest", id: quest.id },
+        stack: shouldNavigate ? [...state.stack, state.screen] : state.stack,
+        screen: shouldNavigate ? { name: "quest", id: quest.id } : state.screen,
       };
     }
     case "complete": {
@@ -197,7 +200,7 @@ type Api = {
   continueSession: () => void;
   logOut: () => void;
   toggleSave: (id: string) => void;
-  acceptQuest: (draft: QuestDraft) => void;
+  acceptQuest: (draft: QuestDraft, navigate?: boolean) => void;
   completeQuest: (id: string) => Promise<void>;
   abandonQuest: (id: string) => void;
   saveJourney: (plan: JourneyPlan) => void;
@@ -282,7 +285,7 @@ export function RambleProvider({ children }: { children: ReactNode }) {
         }).catch((error: Error) => setSyncError(`Couldn't sign out: ${error.message}`));
       },
       toggleSave: (id) => dispatch({ type: "toggle-save", id }),
-      acceptQuest: (draft) => dispatch({ type: "accept", draft }),
+      acceptQuest: (draft, navigate = true) => dispatch({ type: "accept", draft, navigate }),
       completeQuest: async (id) => {
         const quest = state.user?.quests.find((item) => item.id === id && item.status === "active");
         const destination = feed.places.find((place) => place.id === quest?.discoveryId);

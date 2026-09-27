@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildJourney,
+  draftForPlace,
   matchScore,
   passportPercent,
   passportRows,
@@ -79,6 +80,16 @@ describe("side quests", () => {
 
   it("ranks a shared interest above a miss", () => {
     expect(matchScore(["art"], ["art", "history"])).toBeGreaterThan(matchScore(["food"], ["art", "history"]));
+  });
+
+  it("builds a tailored quest draft for any place", () => {
+    const place = DISCOVERIES.find((p) => p.id === "hungarian")!;
+    const draft = draftForPlace(person(["coffee", "books"]), place, QUEST_TEMPLATES, DISCOVERIES);
+    expect(draft.discoveryId).toBe("hungarian");
+    expect(draft.title).toBeTruthy();
+    expect(draft.objective).toBeTruthy();
+    expect(draft.xp).toBeGreaterThan(0);
+    expect(draft.why).toContain("coffee");
   });
 });
 

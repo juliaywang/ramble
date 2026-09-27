@@ -28,15 +28,16 @@ type Props = {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onOpen: (id: string) => void;
+  onAcceptQuest?: (id: string) => void;
 };
 
-export function MapView({ places, area, you, selectedId, onSelect, onOpen, onLocate }: Props) {
+export function MapView({ places, area, you, selectedId, onSelect, onOpen, onAcceptQuest, onLocate }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const [zoom, setZoom] = useState(area.zoom);
   const [tileError, setTileError] = useState(false);
-  const callbacks = useRef({ onSelect, onOpen });
-  callbacks.current = { onSelect, onOpen };
+  const callbacks = useRef({ onSelect, onOpen, onAcceptQuest });
+  callbacks.current = { onSelect, onOpen, onAcceptQuest };
   const selected = places.find((place) => place.id === selectedId);
   const areaRef = useRef(area);
   areaRef.current = area;
@@ -138,10 +139,27 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen, onLoc
       <div ref={container} className="street-map" aria-label={`Street map of ${area.name}`} />
       <div className="map-overlays">
         {selected && (
-          <button type="button" className="map-callout" onClick={() => onOpen(selected.id)}>
-            <span><strong>{selected.name}</strong><small>{selected.minutes} min · {selected.match}% match</small></span>
-            <span className="map-callout-go">Open</span>
-          </button>
+          <div className="map-callout">
+            <button type="button" className="map-callout-info" onClick={() => onOpen(selected.id)}>
+              <strong>{selected.name}</strong>
+              <small>{selected.minutes} min · {selected.match}% match</small>
+            </button>
+            <div className="map-callout-actions">
+              {onAcceptQuest && (
+                <button
+                  type="button"
+                  className="map-callout-quest"
+                  onClick={() => onAcceptQuest(selected.id)}
+                >
+                  <DesignIcon name="dice" size="sm" />
+                  Quest
+                </button>
+              )}
+              <button type="button" className="map-callout-go" onClick={() => onOpen(selected.id)}>
+                Open
+              </button>
+            </div>
+          </div>
         )}
         <div className="map-controls" role="group" aria-label="Map zoom">
           <button type="button" aria-label="Zoom in" title="Zoom in" disabled={!map || zoom >= 19} onClick={() => map?.zoomIn()}>+</button>

@@ -1,16 +1,17 @@
 import { BackRow, OpenInMaps, PlaceMedia, SourceBadge } from "../components/ui";
 import { distanceMiles, formatDistance, walkMinutes } from "../pipeline/geo";
 import { useLocation } from "../state/LocationContext";
-import { categoryLabel, explainCommunity, explainPlace, matchScore } from "../pipeline/agent";
+import { categoryLabel, draftForPlace, explainCommunity, explainPlace, matchScore } from "../pipeline/agent";
 import { communityById } from "../pipeline/index";
 import { CATEGORIES } from "../pipeline/types";
-import { usePlace } from "../state/FeedContext";
+import { useFeed, usePlace } from "../state/FeedContext";
 import { useRamble, useRequiredUser } from "../state/RambleContext";
 
 export function PlaceScreen({ id }: { id: string }) {
   const user = useRequiredUser();
-  const { back, go, toggleSave } = useRamble();
-  const { origin, request } = useLocation();
+  const feed = useFeed();
+  const { back, go, toggleSave, acceptQuest } = useRamble();
+  const { origin } = useLocation();
   const place = usePlace(id);
   if (!place) {
     return (
@@ -80,18 +81,40 @@ export function PlaceScreen({ id }: { id: string }) {
       </div>
       <div className="dock">
         <OpenInMaps place={place} />
-        <button
-          type="button"
-          className="btn btn-clay btn-block"
-          onClick={() => {
-            void (async () => {
-              if (!origin && !(await request())) return;
-              go({ name: "generating-quest", avoid: [] });
-            })();
-          }}
-        >
-          🎲 Give me a side quest
-        </button>
+        {user.quests.find((q) => q.discoveryId === place.id && q.status === "active") ? (
+          <button
+            type="button"
+            className="btn btn-clay btn-block"
+            onClick={() => {
+              const active = user.quests.find((q) => q.discoveryId === place.id && q.status === "active");
+              if (active) go({ name: "quest", id: active.id });
+            }}
+          >
+            🎲 View active quest
+          </button>
+        ) : user.quests.some((q) => q.discoveryId === place.id && q.status === "completed") ? (
+          <button
+            type="button"
+            className="btn btn-ghost btn-block"
+            onClick={() => {
+              const completed = user.quests.find((q) => q.discoveryId === place.id && q.status === "completed");
+              if (completed) go({ name: "quest", id: completed.id });
+            }}
+          >
+            ✓ Quest completed (+{feed.questTemplates.find((t) => t.discoveryId === place.id)?.xp ?? 35} XP)
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-clay btn-block"
+            onClick={() => {
+              const draft = draftForPlace(user, place, feed.questTemplates, feed.places, origin ?? undefined);
+              acceptQuest(draft);
+            }}
+          >
+            🎲 Accept quest (+{feed.questTemplates.find((t) => t.discoveryId === place.id)?.xp ?? 35} XP)
+          </button>
+        )}
       </div>
     </section>
   );
