@@ -1,3 +1,4 @@
+import { availableForQuest } from "../pipeline/availability";
 import { useEffect, useRef, useState } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import L from "leaflet";
@@ -9,7 +10,11 @@ import { DesignIcon, categoryIcons, categoryColors } from "./DesignIcon";
 import type { CityArea, WalkStart } from "../pipeline/geo";
 import { CATEGORIES, type CategoryId, type DataSource } from "../pipeline/types";
 
+const iconMarkup = new Map<string, string>();
+
 export type MapPlace = {
+  eventStart?: string;
+  eventEnd?: string;
   id: string;
   name: string;
   lat: number;
@@ -90,6 +95,7 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen, onAcc
   useEffect(() => {
     if (!map) return;
     const markers = L.markerClusterGroup({
+      chunkedLoading: true,
       showCoverageOnHover: false,
       maxClusterRadius: 46,
       spiderfyOnMaxZoom: true,
@@ -104,6 +110,7 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen, onAcc
           fillOpacity: 1,
         }).addTo(map).bindTooltip(`Starting point · ${you.label}`)
       : null;
+    const layers: L.Marker[] = [];
     for (const place of places) {
       if (!Number.isFinite(place.lat) || !Number.isFinite(place.lng)) continue;
       const active = selectedId === place.id;
@@ -113,13 +120,14 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen, onAcc
       button.style.background = categoryColors[place.category];
       button.setAttribute("aria-label", `${place.name}, ${CATEGORIES[place.category].label}`);
       button.setAttribute("aria-pressed", String(active));
-      button.innerHTML = renderToStaticMarkup(<DesignIcon name={categoryIcons[place.category] ?? "pin"} size="sm" />);
+      if (!iconMarkup.has(place.category)) iconMarkup.set(place.category, renderToStaticMarkup(<DesignIcon name={categoryIcons[place.category] ?? "pin"} size="sm" />));
+      button.innerHTML = iconMarkup.get(place.category)!;
       L.DomEvent.disableClickPropagation(button);
       button.onclick = () => {
         if (active) callbacks.current.onOpen(place.id);
         else callbacks.current.onSelect(place.id);
       };
-      markers.addLayer(
+      layers.push(
         L.marker([place.lat, place.lng], {
           icon: L.divIcon({ html: button, className: "street-map-marker", iconSize: [30, 30], iconAnchor: [15, 15] }),
           keyboard: false,
@@ -128,6 +136,7 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen, onAcc
       );
     }
     map.addLayer(markers);
+    markers.addLayers(layers);
     return () => {
       map.removeLayer(markers);
       if (start) map.removeLayer(start);
@@ -145,7 +154,7 @@ export function MapView({ places, area, you, selectedId, onSelect, onOpen, onAcc
               <small>{selected.minutes} min · {selected.match}% match</small>
             </button>
             <div className="map-callout-actions">
-              {onAcceptQuest && (
+              {onAcceptQuest && availableForQuest(selected) && (
                 <button
                   type="button"
                   className="map-callout-quest"

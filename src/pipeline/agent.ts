@@ -1,3 +1,4 @@
+import { availableForQuest } from "./availability";
 import { progression } from "./progression";
 import { ANCHOR, distanceMiles, walkMinutes, type WalkStart } from "./geo";
 import {
@@ -208,15 +209,17 @@ export function rollSideQuest(
   origin: WalkStart = ANCHOR,
 ): QuestDraft | null {
   const taken = takenTemplateIds(person, avoidTemplateIds);
+  const byId = new Map(places.map(place => [place.id, place]));
+  const stamped = new Set(person.discoveredIds.map(id => byId.get(id)?.passportCategory));
   const scored = templates
     .filter((template) => !taken.has(template.id))
     .flatMap((template) => {
-      const place = places.find((item) => item.id === template.discoveryId);
-      if (!place) return [];
+      const place = byId.get(template.discoveryId);
+      if (!place || !availableForQuest(place)) return [];
       const hits = overlap(person.interests, place.tags).length;
       const minutes = walkMinutes(distanceMiles(origin, place));
       const gap =
-        place.passportCategory !== null && !isCategoryStamped(person, place.passportCategory, places);
+        place.passportCategory !== null && !stamped.has(place.passportCategory);
       const fresh = person.discoveredIds.includes(place.id) ? 0 : 8;
       const score = 36 + hits * 14 + (gap ? 42 : 0) + fresh - minutes * 0.45;
       return [{ template, place, score }];
@@ -236,11 +239,11 @@ export function rollSideQuest(
   };
 }
 
-function journeyScore(person: Person, place: Discovery, places: Discovery[], origin: WalkStart) {
+function journeyScore(person: Person, place: Discovery, stamped: Set<PassportCategoryId | null | undefined>, origin: WalkStart) {
   const hits = overlap(person.interests, place.tags).length;
   const minutes = walkMinutes(distanceMiles(origin, place));
   const gap =
-    place.passportCategory !== null && !isCategoryStamped(person, place.passportCategory, places);
+    place.passportCategory !== null && !stamped.has(place.passportCategory);
   const fresh = person.discoveredIds.includes(place.id) ? 0 : 8;
   return 24 + hits * 16 + (gap ? 10 : 0) + fresh - minutes * 0.4;
 }
@@ -280,8 +283,11 @@ export function buildJourney(
   origin: WalkStart = ANCHOR,
 ): JourneyPlan {
   const stopCount = duration === 30 ? 1 : duration === 60 ? 2 : duration === 90 ? 3 : 4;
-  const ranked = [...places].sort(
-    (a, b) => journeyScore(person, b, places, origin) - journeyScore(person, a, places, origin) || a.id.localeCompare(b.id),
+  const byId = new Map(places.map(place => [place.id, place]));
+  const stamped = new Set(person.discoveredIds.map(id => byId.get(id)?.passportCategory));
+  const scores = new Map(places.map(place => [place.id, journeyScore(person, place, stamped, origin)]));
+  const ranked = places.filter(place => availableForQuest(place)).sort(
+    (a, b) => scores.get(b.id)! - scores.get(a.id)! || a.id.localeCompare(b.id),
   );
 
   let ordered = chooseStops(ranked, stopCount, origin);

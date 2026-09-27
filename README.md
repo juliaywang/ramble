@@ -84,3 +84,12 @@ From an active quest or generated journey, choose an accepted friend and select 
 Each person checks in within 200 feet of the destination. Their own check-in earns base XP; both check-ins within 30 minutes award each participant an additional 50% of base XP. Shared journeys award 40 base XP plus 20 together XP per stop. Each stop must be checked in separately. Sending or accepting invitations alone does not earn XP. Duplicate check-ins retain the original timestamp and do not repeat rewards. The sender's original quest is updated rather than added again.
 
 Without Supabase configured, invitations persist in this browser's local storage; test with two local accounts in the same browser. Separate browsers/devices require Supabase. Configured cloud errors are shown rather than silently saving invitations locally. Location is verified by the app, not a server-side GPS attestation service.
+
+
+### Frontend discovery feed
+
+With `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` configured, the frontend reads the existing `discoveries` table for all eight synced NYC sources. It uses the public browser key, never a service-role key. Pagination loads more than the first 1,000 records. The feed refreshes after login, on window focus, and every five minutes; changed descriptions and coordinates are applied as well as new IDs.
+
+Deploy/run `sync-nyc-data` first to populate the table, then deploy/reload the frontend. If Explore reports that it is showing saved places, check the sync results and read permissions. [supabase_discoveries_read.sql](./supabase_discoveries_read.sql) grants read access to these public NYC sources if needed; it adds no browser write policy. An empty or failed database read shows a fallback notice. Without Supabase configured, the existing direct NYC fetch remains available.
+
+Supabase source/external-ID pairs give records stable frontend IDs. Same-name nearby matches retain existing IDs for saved places and quests. Curated local entries remain available. Records without coordinates cannot appear on the map; cultural organizations will appear once geocoded. Expired or undated events are excluded. Upcoming events can be viewed, but only running events produce quests or journey stops. Source links and event schedules appear on place details.

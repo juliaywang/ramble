@@ -1,3 +1,4 @@
+import { availableForQuest } from "../pipeline/availability";
 import { DesignIcon } from "../components/DesignIcon";
 import { useEffect, useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
@@ -59,6 +60,7 @@ export function ExploreScreen() {
   }, [user, inArea, feed.questTemplates, avoidTemplates, origin, active]);
 
   const handleAcceptQuest = (place: Discovery) => {
+    if (!availableForQuest(place)) { go({ name: "place", id: place.id }); return; }
     const draft = draftForPlace(user, place, feed.questTemplates, feed.places, origin ?? undefined);
     acceptQuest(draft, false);
     setAcceptedToast({ title: draft.title, templateId: draft.templateId });
@@ -76,6 +78,9 @@ export function ExploreScreen() {
     <section className="page explore-page">
       <header className="explore-head">
         <h1>{greeting(user.name)}</h1>
+        {feed.loading && <p className="fine" role="status">Updating places…</p>}
+        {!feed.loading && feed.updatedFrom === "supabase" && <p className="fine">Updated from NYC Open Data</p>}
+        {feed.notice && <p className="fine" role="status">{feed.notice}</p>}
         <p className="meta-line">{area.name}</p>
         <p className="lede">
           {openCount} from NYC Open Data · {liveCount} live discoveries
@@ -143,7 +148,9 @@ export function ExploreScreen() {
         onLocate={() => void request()}
       />
       <p className="map-note">
-        {feed.updatedFrom === "live"
+        {feed.updatedFrom === "supabase"
+          ? `Synced NYC Open Data across ${area.name}. ${locationNote(status)}`
+          : feed.updatedFrom === "live"
           ? `Live pull from NYC Open Data across ${area.name}. ${locationNote(status)}`
           : `Saved copy of NYC Open Data across ${area.name}. ${locationNote(status)}`}
       </p>
@@ -224,7 +231,7 @@ export function ExploreScreen() {
                 questState={questState}
                 activeQuestId={activeQuest?.id}
                 onOpen={() => go({ name: "place", id: place.id })}
-                onAcceptQuest={() => handleAcceptQuest(place)}
+                onAcceptQuest={quest ? () => handleAcceptQuest(place) : undefined}
                 onViewQuest={(questId) => go({ name: "quest", id: questId })}
               />
             );

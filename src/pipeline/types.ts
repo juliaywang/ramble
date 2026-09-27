@@ -57,6 +57,9 @@ export type DataSource = "nyc-open-data" | "live-discovery";
  * a future adapter would have used.
  */
 export type Discovery = {
+  eventStart?: string;
+  eventEnd?: string;
+  sourceUrl?: string;
   id: string;
   name: string;
   category: CategoryId;

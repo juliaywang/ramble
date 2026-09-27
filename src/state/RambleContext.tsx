@@ -1,3 +1,4 @@
+import { availableForQuest } from "../pipeline/availability";
 import { getUserId } from "../lib/friendsService";
 import type { SavedQuest } from "../pipeline/types";
 import type { User } from "@supabase/supabase-js";
@@ -312,6 +313,7 @@ export function RambleProvider({ children }: { children: ReactNode }) {
         const quest = state.user?.quests.find((item) => item.id === id && item.status === "active");
         const destination = feed.places.find((place) => place.id === quest?.discoveryId);
         if (!state.session || !quest || !destination) throw new Error("This quest is no longer available to complete.");
+        if (!availableForQuest(destination)) throw new Error("This event is not currently running. Check its scheduled time.");
         await verifyQuestLocation(destination, origin);
         dispatch({ type: "complete", id, userId: state.user?.id });
       },

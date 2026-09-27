@@ -1,3 +1,4 @@
+import { availableForQuest } from "../pipeline/availability";
 import { BackRow, OpenInMaps, PlaceMedia, SourceBadge } from "../components/ui";
 import { distanceMiles, formatDistance, walkMinutes } from "../pipeline/geo";
 import { useLocation } from "../state/LocationContext";
@@ -48,6 +49,7 @@ export function PlaceScreen({ id }: { id: string }) {
         <p className="meta-line">
           {miles === null ? "Turn on location for walking distance" : `${formatDistance(miles)} · ${minutes} min walk`} · {match}% match
         </p>
+        {place.sourceUrl && <a className="text-btn" href={place.sourceUrl} target="_blank" rel="noreferrer">View source listing ↗</a>}
         <div className="badge-row">
           <SourceBadge source={place.source} />
           <span className="logged">{place.sourceDetail}</span>
@@ -103,7 +105,7 @@ export function PlaceScreen({ id }: { id: string }) {
           >
             ✓ Quest completed (+{feed.questTemplates.find((t) => t.discoveryId === place.id)?.xp ?? 35} XP)
           </button>
-        ) : (
+        ) : !availableForQuest(place) ? <p className="fine">Quest check-in is available while this event is running. {place.hours}</p> : (
           <button
             type="button"
             className="btn btn-clay btn-block"

@@ -1,3 +1,5 @@
+import { loadSyncedDiscoveries, preservePlaceIds } from "./syncedDiscoveries";
+import { availableForQuest } from "./availability";
 import { COMMUNITIES } from "./communities";
 import { DISCOVERIES } from "./feed";
 import { loadOpenDataPlaces, normalizeSnapshot } from "./openData";
@@ -8,8 +10,10 @@ export type NeighborhoodFeed = {
   places: Discovery[];
   questTemplates: QuestTemplate[];
   communities: Community[];
-  /** "live" when at least one SODA dataset responded; otherwise the saved copy. */
-  updatedFrom: "live" | "snapshot";
+  /** Identifies the database feed, direct NYC fallback, or saved snapshot. */
+  updatedFrom: "live" | "snapshot" | "supabase";
+  notice?: string;
+  loading?: boolean;
 };
 
 /**
@@ -27,7 +31,7 @@ export function assembleFeed(openPlaces: Discovery[], updatedFrom: NeighborhoodF
   const places = [...byId.values()];
   return {
     places,
-    questTemplates: places.map(questForPlace),
+    questTemplates: places.filter(place => availableForQuest(place)).map(questForPlace),
     communities: COMMUNITIES,
     updatedFrom,
   };
@@ -117,10 +121,20 @@ export function getNeighborhoodFeed(): NeighborhoodFeed {
   return assembleFeed(normalizeSnapshot(), "snapshot");
 }
 
-export async function fetchNeighborhoodFeed(): Promise<NeighborhoodFeed> {
-  const live = await loadOpenDataPlaces();
-  if (live.places.length === 0) return getNeighborhoodFeed();
-  return assembleFeed(live.places, live.live ? "live" : "snapshot");
+export async function fetchNeighborhoodFeed(signal?: AbortSignal): Promise<NeighborhoodFeed> {
+  try {
+    const synced = await loadSyncedDiscoveries(signal);
+    if (synced) {
+      if (!synced.places.length) return { ...getNeighborhoodFeed(), notice: "Showing saved places. No map-ready synced discoveries are available yet. Check the sync and discoveries read permissions." };
+      const compatible = preservePlaceIds(synced.places, getNeighborhoodFeed().places);
+      return { ...assembleFeed(compatible, "supabase"), notice: synced.unmapped ? `${synced.unmapped} listings need coordinates before they can appear on the map.` : undefined };
+    }
+    const live = await loadOpenDataPlaces();
+    return live.places.length ? assembleFeed(live.places, live.live ? "live" : "snapshot") : getNeighborhoodFeed();
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return { ...getNeighborhoodFeed(), notice: "Showing saved places because synced discoveries could not load. Check your connection and Supabase read permissions." };
+  }
 }
 
 export function communityById(id: string) {
